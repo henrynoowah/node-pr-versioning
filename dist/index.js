@@ -108,7 +108,7 @@ async function run() {
             console.log(`Updating version: ${version} -> ${newVersion}`);
         }
         const headRef = pullRequest.head.ref;
-        console.log(headRef);
+        console.log(headRef, newVersion, version, newVersion !== version);
         if (newVersion !== version) {
             // Update package.json with the new version
             const packageJsonPath = path_1.default.join(__dirname, "package.json");

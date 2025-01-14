@@ -31858,12 +31858,23 @@ async function run() {
         const isPatch = existingLabels.some((label) => patchLabel.includes(label));
         if (isMajor) {
             console.log("Major label found");
+            const newVersion = version.split(".")[0] + 1 + ".0.0";
+            console.log(newVersion);
         }
         if (isMinor) {
             console.log("Minor label found");
+            const newVersion = version.split(".")[0] + "." + version.split(".")[1] + 1 + ".0";
+            console.log(newVersion);
         }
         if (isPatch) {
             console.log("Patch label found");
+            const newVersion = version.split(".")[0] +
+                "." +
+                version.split(".")[1] +
+                "." +
+                version.split(".")[2] +
+                1;
+            console.log(newVersion);
         }
         // Add the new label
         await octokit.rest.issues.addLabels({

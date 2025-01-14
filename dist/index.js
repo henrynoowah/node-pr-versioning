@@ -84,9 +84,7 @@ async function run() {
     const skipCommit = (0, core_1.getInput)("skip-commit");
     const createTag = (0, core_1.getInput)("create-tag");
     const customPath = (0, core_1.getInput)("path");
-    const packageJsonPath = customPath
-        ? `${process.cwd()}/${customPath}`
-        : `${process.cwd()}/package.json`;
+    const packageJsonPath = path_1.default.join(process.cwd(), customPath || "package.json");
     const packageJson = JSON.parse((0, fs_1.readFileSync)(packageJsonPath, "utf-8"));
     const version = packageJson.version;
     console.log(version);
@@ -113,7 +111,6 @@ async function run() {
         if (isMajor) {
             console.log("🎉 Major label found");
             newVersion = Number(version.split(".")[0]) + 1 + ".0.0";
-            console.log(`Updating version: ${version} -> ${newVersion}`);
         }
         if (isMinor) {
             console.log("🚀 Minor label found");
@@ -122,7 +119,6 @@ async function run() {
                     "." +
                     (Number(version.split(".")[1]) + 1) +
                     ".0";
-            console.log(`Updating version: ${version} -> ${newVersion}`);
         }
         if (isPatch) {
             console.log("🔧 Patch label found");
@@ -132,42 +128,44 @@ async function run() {
                     version.split(".")[1] +
                     "." +
                     (Number(version.split(".")[2]) + 1);
-            console.log(`Updating version: ${version} -> ${newVersion}`);
         }
+        if (newVersion === version)
+            console.log("No version change detected");
+        console.log(`Updating version: ${version} -> ${newVersion}`);
         (0, core_1.setOutput)("new-version", newVersion);
-        if (newVersion !== version && !skipCommit) {
-            // Update package.json with the new version
-            const packageJsonPath = path_1.default.join(__dirname, "package.json");
-            console.log("packageJsonPath", packageJsonPath);
-            const packageJson = JSON.parse(await fs_1.default.promises.readFile(packageJsonPath, "utf-8"));
-            packageJson.version = newVersion;
-            await fs_1.default.promises.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2));
-            // Get the current file's SHA
-            const { data: currentFile } = await octokit.rest.repos.getContent({
+        if (skipCommit)
+            return;
+        // Update package.json with the new version
+        // const packageJsonPath = path.join(__dirname, "package.json");
+        console.log("packageJsonPath", packageJsonPath);
+        const packageJson = JSON.parse(await fs_1.default.promises.readFile(packageJsonPath, "utf-8"));
+        packageJson.version = newVersion;
+        await fs_1.default.promises.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2));
+        // Get the current file's SHA
+        const { data: currentFile } = await octokit.rest.repos.getContent({
+            owner: github_1.context.repo.owner,
+            repo: github_1.context.repo.repo,
+            path: "package.json",
+            ref: pullRequest.head.ref,
+        });
+        await octokit.rest.repos.createOrUpdateFileContents({
+            owner: github_1.context.repo.owner,
+            repo: github_1.context.repo.repo,
+            path: "package.json",
+            message: `node-pr-versioning: Update version from ${version} to ${newVersion}`,
+            content: Buffer.from(JSON.stringify(packageJson, null, 2)).toString("base64"),
+            branch: pullRequest.head.ref,
+            sha: currentFile.sha, // Use the current file's SHA
+        });
+        if (createTag) {
+            await octokit.rest.git.createTag({
                 owner: github_1.context.repo.owner,
                 repo: github_1.context.repo.repo,
-                path: "package.json",
-                ref: pullRequest.head.ref,
-            });
-            await octokit.rest.repos.createOrUpdateFileContents({
-                owner: github_1.context.repo.owner,
-                repo: github_1.context.repo.repo,
-                path: "package.json",
+                tag: newVersion,
                 message: `node-pr-versioning: Update version from ${version} to ${newVersion}`,
-                content: Buffer.from(JSON.stringify(packageJson, null, 2)).toString("base64"),
-                branch: pullRequest.head.ref,
-                sha: currentFile.sha, // Use the current file's SHA
+                object: currentFile.sha, // Add the current file's SHA as the object
+                type: "commit", // Specify the type as "commit"
             });
-            if (createTag) {
-                await octokit.rest.git.createTag({
-                    owner: github_1.context.repo.owner,
-                    repo: github_1.context.repo.repo,
-                    tag: newVersion,
-                    message: `node-pr-versioning: Update version from ${version} to ${newVersion}`,
-                    object: currentFile.sha, // Add the current file's SHA as the object
-                    type: "commit", // Specify the type as "commit"
-                });
-            }
         }
     }
     catch (error) {

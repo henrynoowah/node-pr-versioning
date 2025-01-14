@@ -48,6 +48,8 @@ async function run() {
   const customPath = getInput("path");
 
   const packageJsonPath = customPath ?? "package.json";
+
+  console.log("packageJsonPath", packageJsonPath);
   const { data: packageJsonResponse } = await octokit.rest.repos.getContent({
     owner: context.repo.owner,
     repo: context.repo.repo,

@@ -22,7 +22,7 @@ inputs:
   path:
     description: "The path to the package.json file"
     required: false
-    default: "."
+    default: "package.json"
   create-tag:
     description: "Create a tag using new version"
     required: false

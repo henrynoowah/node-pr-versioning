@@ -2,6 +2,14 @@ name: "PR Versioning"
 description: "Upate version using PR labels"
 author: "noowah"
 
+inputs:
+  gh-token:
+    description: "The GitHub token for authentication"
+    required: true
+  label:
+    description: "The label to add to the PR"
+    required: true
+
 runs:
   using: "node16"
   main: "dist/index.js"

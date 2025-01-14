@@ -1,4 +1,4 @@
-name: "Hello World"
+name: "Hello"
 
 on:
   workflow_dispatch:
@@ -9,3 +9,5 @@ jobs:
     steps:
       - uses: "actions/checkout@v4"
       - uses: ./
+        with:
+          name: "Noowah"

@@ -78,6 +78,9 @@ async function run() {
       console.log(`Updating version: ${version} -> ${newVersion}`);
     }
 
+    const headRef = pullRequest.head.ref;
+    console.log(headRef);
+
     if (newVersion !== version) {
       // Update package.json with the new version
       const packageJsonPath = path.join(__dirname, "package.json");
@@ -90,8 +93,6 @@ async function run() {
         JSON.stringify(packageJson, null, 2)
       );
 
-      const headRef = pullRequest.head.ref;
-      console.log(headRef);
       // Commit the changes to the target branch
       await octokit.rest.repos.createOrUpdateFileContents({
         owner: context.repo.owner,

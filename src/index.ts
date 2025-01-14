@@ -42,7 +42,7 @@ async function run() {
 
     const existingLabels = pullRequestData.labels.map((label) => label.name);
     console.group("Existing labels:");
-    existingLabels.forEach((label) => console.log(label));
+    existingLabels.forEach((label) => console.log(`- ${label}`));
     console.groupEnd();
 
     const isMajor = existingLabels.some((label) => majorLabel.includes(label));
@@ -99,7 +99,7 @@ async function run() {
         content: Buffer.from(JSON.stringify(packageJson, null, 2)).toString(
           "base64"
         ),
-        branch: context.ref.split("/").pop(), // Assuming the target branch is the current ref
+        branch: pullRequest.head.ref, // Use the head branch of the PR
       });
     }
   } catch (error) {

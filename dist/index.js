@@ -91,10 +91,11 @@ async function run() {
         }
         if (isMinor) {
             console.log("🚀 Minor label found");
-            const newVersion = version.split(".")[0] +
-                "." +
-                (Number(version.split(".")[1]) + 1) +
-                ".0";
+            newVersion =
+                version.split(".")[0] +
+                    "." +
+                    (Number(version.split(".")[1]) + 1) +
+                    ".0";
             console.log(`Updating version: ${version} -> ${newVersion}`);
         }
         if (isPatch) {

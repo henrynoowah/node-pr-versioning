@@ -60,7 +60,7 @@ async function run() {
     }
     if (isMinor) {
       console.log("🚀 Minor label found");
-      const newVersion =
+      newVersion =
         version.split(".")[0] +
         "." +
         (Number(version.split(".")[1]) + 1) +

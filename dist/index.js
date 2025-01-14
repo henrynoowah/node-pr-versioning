@@ -55,13 +55,13 @@ async function run() {
     const customPath = (0, core_1.getInput)("path");
     const packageJsonPath = customPath !== null && customPath !== void 0 ? customPath : "package.json";
     console.log("packageJsonPath", packageJsonPath);
-    const { data: packageJsonResponse } = await octokit.rest.repos.getContent({
+    const { data: currentFile } = await octokit.rest.repos.getContent({
         owner: github_1.context.repo.owner,
         repo: github_1.context.repo.repo,
         path: packageJsonPath,
         ref: pullRequest.head.ref,
     });
-    const packageJson = Buffer.from(packageJsonResponse.content, "base64").toString("utf-8");
+    const packageJson = Buffer.from(currentFile.content, "base64").toString("utf-8");
     const version = JSON.parse(packageJson).version;
     console.log(version);
     try {
@@ -102,33 +102,25 @@ async function run() {
         }
         if (newVersion === version)
             console.log("No version change detected");
-        console.log(`Updating version: ${version} -> ${newVersion}`);
+        console.log(`Expected version update: ${version} -> ${newVersion}`);
         (0, core_1.setOutput)("new-version", newVersion);
-        if (skipCommit)
-            return;
-        // Update package.json with the new version
-        // const packageJsonPath = path.join(__dirname, "package.json");
-        console.log("packageJsonPath", packageJsonPath);
-        const packageJson = JSON.parse(await fs_1.default.promises.readFile(packageJsonPath, "utf-8"));
-        packageJson.version = newVersion;
-        await fs_1.default.promises.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2));
-        // Get the current file's SHA
-        const { data: currentFile } = await octokit.rest.repos.getContent({
-            owner: github_1.context.repo.owner,
-            repo: github_1.context.repo.repo,
-            path: "package.json",
-            ref: pullRequest.head.ref,
-        });
-        await octokit.rest.repos.createOrUpdateFileContents({
-            owner: github_1.context.repo.owner,
-            repo: github_1.context.repo.repo,
-            path: "package.json",
-            message: `node-pr-versioning: Update version from ${version} to ${newVersion}`,
-            content: Buffer.from(JSON.stringify(packageJson, null, 2)).toString("base64"),
-            branch: pullRequest.head.ref,
-            sha: currentFile.sha, // Use the current file's SHA
-        });
+        if (!skipCommit) {
+            console.log("packageJsonPath", packageJsonPath);
+            const packageJson = JSON.parse(await fs_1.default.promises.readFile(packageJsonPath, "utf-8"));
+            packageJson.version = newVersion;
+            await fs_1.default.promises.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2));
+            await octokit.rest.repos.createOrUpdateFileContents({
+                owner: github_1.context.repo.owner,
+                repo: github_1.context.repo.repo,
+                path: "package.json",
+                message: `node-pr-versioning: Update version from ${version} to ${newVersion}`,
+                content: Buffer.from(JSON.stringify(packageJson, null, 2)).toString("base64"),
+                branch: pullRequest.head.ref,
+                sha: currentFile.sha, // Use the current file's SHA
+            });
+        }
         if (createTag) {
+            console.log(`Creating Tag: ${newVersion}`);
             await octokit.rest.git.createTag({
                 owner: github_1.context.repo.owner,
                 repo: github_1.context.repo.repo,

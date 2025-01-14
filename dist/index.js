@@ -129,28 +129,16 @@ async function run() {
         }
         if (createTag) {
             const tagName = skipCommit ? version : newVersion;
-            console.log(`Checking if tag already exists: ${tagName}`);
-            const { data: tag } = await octokit.rest.git.getTag({
+            console.log(`Creating Tag: ${tagName}`);
+            const { data, ...rest } = await octokit.rest.git.createTag({
                 owner: github_1.context.repo.owner,
                 repo: github_1.context.repo.repo,
                 tag: tagName,
-                tag_sha: currentFile.sha,
+                message: `create tag ${tagName}`,
+                object: currentFile.sha, // Add the current file's SHA as the object
+                type: "commit", // Specify the type as "commit"
             });
-            console.log(tag);
-            if (!!tag) {
-                console.log(`Tag ${tagName} already exists. Skipping tag creation.`);
-            }
-            else {
-                console.log(`Creating Tag: ${tagName}`);
-                await octokit.rest.git.createTag({
-                    owner: github_1.context.repo.owner,
-                    repo: github_1.context.repo.repo,
-                    tag: tagName,
-                    message: `create tag ${tagName}`,
-                    object: currentFile.sha, // Add the current file's SHA as the object
-                    type: "commit", // Specify the type as "commit"
-                });
-            }
+            console.log(data);
         }
     }
     catch (error) {

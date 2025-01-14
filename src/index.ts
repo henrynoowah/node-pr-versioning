@@ -84,9 +84,13 @@ async function run() {
     if (newVersion !== version) {
       // Update package.json with the new version
       const packageJsonPath = path.join(__dirname, "package.json");
+      console.log("packageJsonPath", packageJsonPath);
       const packageJson = JSON.parse(
         await fs.promises.readFile(packageJsonPath, "utf-8")
       );
+
+      console.log("packageJson", packageJson);
+
       packageJson.version = newVersion;
       await fs.promises.writeFile(
         packageJsonPath,

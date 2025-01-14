@@ -112,7 +112,9 @@ async function run() {
         if (newVersion !== version) {
             // Update package.json with the new version
             const packageJsonPath = path_1.default.join(__dirname, "package.json");
+            console.log("packageJsonPath", packageJsonPath);
             const packageJson = JSON.parse(await fs_1.default.promises.readFile(packageJsonPath, "utf-8"));
+            console.log("packageJson", packageJson);
             packageJson.version = newVersion;
             await fs_1.default.promises.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2));
             // Commit the changes to the target branch

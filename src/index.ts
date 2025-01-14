@@ -102,14 +102,6 @@ async function run() {
         branch: context.ref.split("/").pop(), // Assuming the target branch is the current ref
       });
     }
-
-    // Add the new label
-    await octokit.rest.issues.addLabels({
-      owner: context.repo.owner,
-      repo: context.repo.repo,
-      issue_number: pullRequest.number,
-      labels: [label],
-    });
   } catch (error) {
     setFailed((error as Error).message);
   }

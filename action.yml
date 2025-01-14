@@ -6,13 +6,13 @@ inputs:
   gh-token:
     description: "The GitHub token for authentication"
     required: true
-  label-minor:
+  labels-minor:
     description: "The label to update Minor version"
     required: true
-  label-major:
+  labels-major:
     description: "The label to update Major version"
     required: true
-  label-patch:
+  labels-patch:
     description: "The label to update Patch version"
     required: true
 

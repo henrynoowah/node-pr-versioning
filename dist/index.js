@@ -1,6 +1,138 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
+/***/ 1188:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const core_1 = __nccwpck_require__(7484);
+const github_1 = __nccwpck_require__(3228);
+const fs_1 = __importStar(__nccwpck_require__(9896));
+const path_1 = __importDefault(__nccwpck_require__(6928));
+async function run() {
+    const token = (0, core_1.getInput)("gh-token");
+    const label = (0, core_1.getInput)("label");
+    const minorLabel = (0, core_1.getInput)("labels-minor")
+        .split(",")
+        .map((label) => label.trim());
+    const majorLabel = (0, core_1.getInput)("labels-major")
+        .split(",")
+        .map((label) => label.trim());
+    const patchLabel = (0, core_1.getInput)("labels-patch")
+        .split(",")
+        .map((label) => label.trim());
+    const packageJsonPath = __nccwpck_require__.ab + "package.json";
+    const packageJson = JSON.parse((0, fs_1.readFileSync)(__nccwpck_require__.ab + "package.json", "utf-8"));
+    const version = packageJson.version;
+    console.log(version);
+    const octokit = (0, github_1.getOctokit)(token);
+    const pullRequest = github_1.context.payload.pull_request;
+    try {
+        if (!pullRequest) {
+            (0, core_1.setFailed)("This action should only be run on a pull request");
+            return;
+        }
+        // Fetch existing labels from the pull request
+        const { data: pullRequestData } = await octokit.rest.pulls.get({
+            owner: github_1.context.repo.owner,
+            repo: github_1.context.repo.repo,
+            pull_number: pullRequest.number,
+        });
+        const existingLabels = pullRequestData.labels.map((label) => label.name);
+        console.group("Existing labels:");
+        existingLabels.forEach((label) => console.log(label));
+        console.groupEnd();
+        const isMajor = existingLabels.some((label) => majorLabel.includes(label));
+        const isMinor = existingLabels.some((label) => minorLabel.includes(label));
+        const isPatch = existingLabels.some((label) => patchLabel.includes(label));
+        let newVersion = version;
+        if (isMajor) {
+            console.log("🎉 Major label found");
+            newVersion = Number(version.split(".")[0]) + 1 + ".0.0";
+            console.log(`Updating version: ${version} -> ${newVersion}`);
+        }
+        if (isMinor) {
+            console.log("🚀 Minor label found");
+            const newVersion = version.split(".")[0] +
+                "." +
+                (Number(version.split(".")[1]) + 1) +
+                ".0";
+            console.log(`Updating version: ${version} -> ${newVersion}`);
+        }
+        if (isPatch) {
+            console.log("🔧 Patch label found");
+            newVersion =
+                version.split(".")[0] +
+                    "." +
+                    version.split(".")[1] +
+                    "." +
+                    (Number(version.split(".")[2]) + 1);
+            console.log(`Updating version: ${version} -> ${newVersion}`);
+        }
+        if (newVersion !== version) {
+            // Update package.json with the new version
+            const packageJsonPath = path_1.default.join(__dirname, "package.json");
+            const packageJson = JSON.parse(await fs_1.default.promises.readFile(packageJsonPath, "utf-8"));
+            packageJson.version = newVersion;
+            await fs_1.default.promises.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2));
+            // Commit the changes to the target branch
+            await octokit.rest.repos.createOrUpdateFileContents({
+                owner: github_1.context.repo.owner,
+                repo: github_1.context.repo.repo,
+                path: "package.json",
+                message: `Update version from ${version} to ${newVersion}`,
+                content: Buffer.from(JSON.stringify(packageJson, null, 2)).toString("base64"),
+                branch: github_1.context.ref.split("/").pop(), // Assuming the target branch is the current ref
+            });
+        }
+    }
+    catch (error) {
+        (0, core_1.setFailed)(error.message);
+    }
+}
+run();
+
+
+/***/ }),
+
 /***/ 4914:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -31810,90 +31942,12 @@ module.exports = parseParams
 /******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";
 /******/ 	
 /************************************************************************/
-var __webpack_exports__ = {};
-// This entry need to be wrapped in an IIFE because it need to be in strict mode.
-(() => {
-"use strict";
-var exports = __webpack_exports__;
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-const core_1 = __nccwpck_require__(7484);
-const github_1 = __nccwpck_require__(3228);
-const fs_1 = __nccwpck_require__(9896);
-async function run() {
-    const token = (0, core_1.getInput)("gh-token");
-    const label = (0, core_1.getInput)("label");
-    const minorLabel = (0, core_1.getInput)("labels-minor")
-        .split(",")
-        .map((label) => label.trim());
-    const majorLabel = (0, core_1.getInput)("labels-major")
-        .split(",")
-        .map((label) => label.trim());
-    const patchLabel = (0, core_1.getInput)("labels-patch")
-        .split(",")
-        .map((label) => label.trim());
-    const packageJsonPath = __nccwpck_require__.ab + "package.json";
-    const packageJson = JSON.parse((0, fs_1.readFileSync)(__nccwpck_require__.ab + "package.json", "utf-8"));
-    const version = packageJson.version;
-    console.log(version);
-    const octokit = (0, github_1.getOctokit)(token);
-    const pullRequest = github_1.context.payload.pull_request;
-    try {
-        if (!pullRequest) {
-            (0, core_1.setFailed)("This action should only be run on a pull request");
-            return;
-        }
-        // Fetch existing labels from the pull request
-        const { data: pullRequestData } = await octokit.rest.pulls.get({
-            owner: github_1.context.repo.owner,
-            repo: github_1.context.repo.repo,
-            pull_number: pullRequest.number,
-        });
-        const existingLabels = pullRequestData.labels.map((label) => label.name);
-        console.group("Existing labels:");
-        existingLabels.forEach((label) => console.log(label));
-        console.groupEnd();
-        const isMajor = existingLabels.some((label) => majorLabel.includes(label));
-        const isMinor = existingLabels.some((label) => minorLabel.includes(label));
-        const isPatch = existingLabels.some((label) => patchLabel.includes(label));
-        if (isMajor) {
-            console.log("Major label found");
-            const newVersion = Number(version.split(".")[0]) + 1 + ".0.0";
-            console.log(newVersion);
-        }
-        if (isMinor) {
-            console.log("Minor label found");
-            const newVersion = version.split(".")[0] +
-                "." +
-                (Number(version.split(".")[1]) + 1) +
-                ".0";
-            console.log(newVersion);
-        }
-        if (isPatch) {
-            console.log("Patch label found");
-            const newVersion = version.split(".")[0] +
-                "." +
-                version.split(".")[1] +
-                "." +
-                (Number(version.split(".")[2]) + 1);
-            console.log(newVersion);
-        }
-        // Add the new label
-        await octokit.rest.issues.addLabels({
-            owner: github_1.context.repo.owner,
-            repo: github_1.context.repo.repo,
-            issue_number: pullRequest.number,
-            labels: [label],
-        });
-    }
-    catch (error) {
-        (0, core_1.setFailed)(error.message);
-    }
-}
-run();
-
-})();
-
-module.exports = __webpack_exports__;
+/******/ 	
+/******/ 	// startup
+/******/ 	// Load entry module and return exports
+/******/ 	// This entry module is referenced by other modules so it can't be inlined
+/******/ 	var __webpack_exports__ = __nccwpck_require__(1188);
+/******/ 	module.exports = __webpack_exports__;
+/******/ 	
 /******/ })()
 ;

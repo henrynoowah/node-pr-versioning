@@ -141,7 +141,7 @@ async function run() {
                 console.log("No version change detected");
             console.log(`Expected version update: ${version} -> ${newVersion}`);
             (0, core_1.setOutput)("new-version", newVersion);
-            if (skipCommit) {
+            if (!!skipCommit) {
                 console.log("skipping commit");
                 console.log(); // Empty space
             }

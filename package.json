@@ -1,14 +1,19 @@
 {
-  "name": "pr-versioning",
+  "name": "@noowah/pr-versioning",
   "version": "1.0.0",
+  "author": "Hawoon JOH <henrynoowah@noowah.com> (https://github.com/henrynoowah)",
   "description": "",
   "main": "index.js",
   "scripts": {
     "build": "tsc && ncc build lib/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "github",
+    "actions",
+    "versioning",
+    "pr"
+  ],
   "license": "ISC",
   "devDependencies": {
     "@types/node": "^20.10.6",

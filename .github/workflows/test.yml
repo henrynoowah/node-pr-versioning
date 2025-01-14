@@ -5,13 +5,15 @@ on:
     types: [opened, reopened, synchronize]
 
 jobs:
-  hello-world:
+  update-version:
     runs-on: "ubuntu-latest"
     steps:
       - uses: "actions/checkout@v4"
       - uses: ./
         with:
-          gh-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           labels-minor: "enhancement"
           labels-major: "major"
           labels-patch: "chore, bug"
+          skip-commit: true
+          create-tag: true

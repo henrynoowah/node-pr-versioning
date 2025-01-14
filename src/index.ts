@@ -1,11 +1,32 @@
-import { getInput, setFailed } from "@actions/core";
+import { getInput, setFailed, setOutput } from "@actions/core";
 import { context, getOctokit } from "@actions/github";
 import fs, { readFileSync } from "fs";
 import path from "path";
-
+/**
+ * Runs the versioning action for a GitHub pull request.
+ *
+ * This function retrieves the GitHub token, checks for the presence of a pull request,
+ * and fetches the existing labels associated with the pull request. Based on the labels,
+ * it determines whether to increment the version as major, minor, or patch. If a version
+ * change is necessary, it updates the `package.json` file in the repository with the new version.
+ *
+ * The function performs the following steps:
+ * 1. Retrieves the GitHub token from the action inputs.
+ * 2. Checks if the action is triggered by a pull request.
+ * 3. Fetches existing labels from the pull request.
+ * 4. Determines the type of version increment based on the labels.
+ * 5. Updates the `package.json` file with the new version if necessary.
+ * 6. Commits the changes back to the repository.
+ *
+ * @async
+ * @function run
+ * @throws {Error} Throws an error if the GitHub token is missing or if the action is not run on a pull request.
+ */
 async function run() {
-  const token = getInput("gh-token");
+  const token = getInput("github-token");
   if (!token) return setFailed("GitHub token is required");
+
+  const pullRequest = context.payload.pull_request;
 
   const minorLabel = getInput("labels-minor")
     .split(",")
@@ -17,15 +38,20 @@ async function run() {
     .split(",")
     .map((label) => label.trim());
 
-  const packageJsonPath = `${process.cwd()}/package.json`;
+  const skipCommit = getInput("skip-commit");
+  const createTag = getInput("create-tag");
+  const customPath = getInput("path");
+
+  const packageJsonPath = customPath
+    ? `${process.cwd()}/${customPath}`
+    : `${process.cwd()}/package.json`;
+
   const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
   const version = packageJson.version;
 
   console.log(version);
 
   const octokit = getOctokit(token);
-
-  const pullRequest = context.payload.pull_request;
 
   try {
     if (!pullRequest) {
@@ -82,7 +108,9 @@ async function run() {
       console.log(`Updating version: ${version} -> ${newVersion}`);
     }
 
-    if (newVersion !== version) {
+    setOutput("new-version", newVersion);
+
+    if (newVersion !== version && !skipCommit) {
       // Update package.json with the new version
       const packageJsonPath = path.join(__dirname, "package.json");
 
@@ -117,6 +145,16 @@ async function run() {
         branch: pullRequest.head.ref,
         sha: (currentFile as any).sha, // Use the current file's SHA
       });
+      if (createTag) {
+        await octokit.rest.git.createTag({
+          owner: context.repo.owner,
+          repo: context.repo.repo,
+          tag: newVersion,
+          message: `node-pr-versioning: Update version from ${version} to ${newVersion}`,
+          object: (currentFile as any).sha, // Add the current file's SHA as the object
+          type: "commit", // Specify the type as "commit"
+        });
+      }
     }
   } catch (error) {
     setFailed((error as Error).message);

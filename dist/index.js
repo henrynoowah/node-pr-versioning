@@ -47,10 +47,31 @@ const core_1 = __nccwpck_require__(7484);
 const github_1 = __nccwpck_require__(3228);
 const fs_1 = __importStar(__nccwpck_require__(9896));
 const path_1 = __importDefault(__nccwpck_require__(6928));
+/**
+ * Runs the versioning action for a GitHub pull request.
+ *
+ * This function retrieves the GitHub token, checks for the presence of a pull request,
+ * and fetches the existing labels associated with the pull request. Based on the labels,
+ * it determines whether to increment the version as major, minor, or patch. If a version
+ * change is necessary, it updates the `package.json` file in the repository with the new version.
+ *
+ * The function performs the following steps:
+ * 1. Retrieves the GitHub token from the action inputs.
+ * 2. Checks if the action is triggered by a pull request.
+ * 3. Fetches existing labels from the pull request.
+ * 4. Determines the type of version increment based on the labels.
+ * 5. Updates the `package.json` file with the new version if necessary.
+ * 6. Commits the changes back to the repository.
+ *
+ * @async
+ * @function run
+ * @throws {Error} Throws an error if the GitHub token is missing or if the action is not run on a pull request.
+ */
 async function run() {
-    const token = (0, core_1.getInput)("gh-token");
+    const token = (0, core_1.getInput)("github-token");
     if (!token)
         return (0, core_1.setFailed)("GitHub token is required");
+    const pullRequest = github_1.context.payload.pull_request;
     const minorLabel = (0, core_1.getInput)("labels-minor")
         .split(",")
         .map((label) => label.trim());
@@ -60,12 +81,16 @@ async function run() {
     const patchLabel = (0, core_1.getInput)("labels-patch")
         .split(",")
         .map((label) => label.trim());
-    const packageJsonPath = __nccwpck_require__.ab + "package.json";
-    const packageJson = JSON.parse((0, fs_1.readFileSync)(__nccwpck_require__.ab + "package.json", "utf-8"));
+    const skipCommit = (0, core_1.getInput)("skip-commit");
+    const createTag = (0, core_1.getInput)("create-tag");
+    const customPath = (0, core_1.getInput)("path");
+    const packageJsonPath = customPath
+        ? `${process.cwd()}/${customPath}`
+        : `${process.cwd()}/package.json`;
+    const packageJson = JSON.parse((0, fs_1.readFileSync)(packageJsonPath, "utf-8"));
     const version = packageJson.version;
     console.log(version);
     const octokit = (0, github_1.getOctokit)(token);
-    const pullRequest = github_1.context.payload.pull_request;
     try {
         if (!pullRequest) {
             (0, core_1.setFailed)("This action should only be run on a pull request");
@@ -109,7 +134,8 @@ async function run() {
                     (Number(version.split(".")[2]) + 1);
             console.log(`Updating version: ${version} -> ${newVersion}`);
         }
-        if (newVersion !== version) {
+        (0, core_1.setOutput)("new-version", newVersion);
+        if (newVersion !== version && !skipCommit) {
             // Update package.json with the new version
             const packageJsonPath = path_1.default.join(__dirname, "package.json");
             console.log("packageJsonPath", packageJsonPath);
@@ -132,6 +158,16 @@ async function run() {
                 branch: pullRequest.head.ref,
                 sha: currentFile.sha, // Use the current file's SHA
             });
+            if (createTag) {
+                await octokit.rest.git.createTag({
+                    owner: github_1.context.repo.owner,
+                    repo: github_1.context.repo.repo,
+                    tag: newVersion,
+                    message: `node-pr-versioning: Update version from ${version} to ${newVersion}`,
+                    object: currentFile.sha, // Add the current file's SHA as the object
+                    type: "commit", // Specify the type as "commit"
+                });
+            }
         }
     }
     catch (error) {

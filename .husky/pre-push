@@ -1,5 +1,1 @@
 npm run build
-
-# Start of Selection
-git add . || { echo "Failed to add files to git"; exit 1; }
-git commit -m "build package" || { echo "Failed to commit changes"; exit 1; }

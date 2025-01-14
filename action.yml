@@ -1,8 +1,7 @@
-name: "test"
-description: "test"
+name: "PR Versioning"
+description: "Upate version using PR labels"
 author: "noowah"
 
-on:
-  push:
-    branches:
-      - main
+runs:
+  using: "node16"
+  main: "dist/index.js"

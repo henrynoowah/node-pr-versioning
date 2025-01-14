@@ -4,7 +4,6 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "pre-push": "npm run build",
     "build": "tsc && ncc build lib/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

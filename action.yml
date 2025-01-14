@@ -3,12 +3,30 @@ description: "Upate version using PR labels"
 author: "noowah"
 
 inputs:
-  gh-token:
+  github-token:
     description: "The GitHub token for authentication"
     required: true
-  label:
-    description: "The label to add to the PR"
+  labels-minor:
+    description: "The label to update Minor version"
     required: true
+  labels-major:
+    description: "The label to update Major version"
+    required: true
+  labels-patch:
+    description: "The label to update Patch version"
+    required: true
+  skip-commit:
+    description: "Skip commit the changes to the repository"
+    required: false
+    default: "false"
+  path:
+    description: "The path to the package.json file"
+    required: false
+    default: "package.json"
+  create-tag:
+    description: "Create a tag using new version"
+    required: false
+    default: "false"
 
 runs:
   using: "node16"

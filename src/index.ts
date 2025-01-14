@@ -1,6 +1,7 @@
 import { getInput, setFailed } from "@actions/core";
 import { context, getOctokit } from "@actions/github";
-import { readFileSync } from "fs";
+import fs, { readFileSync } from "fs";
+import path from "path";
 
 async function run() {
   const token = getInput("gh-token");
@@ -48,31 +49,58 @@ async function run() {
     const isMinor = existingLabels.some((label) => minorLabel.includes(label));
     const isPatch = existingLabels.some((label) => patchLabel.includes(label));
 
+    let newVersion = version;
+
     if (isMajor) {
-      console.log("Major label found");
+      console.log("🎉 Major label found");
 
-      const newVersion = Number(version.split(".")[0]) + 1 + ".0.0";
+      newVersion = Number(version.split(".")[0]) + 1 + ".0.0";
 
-      console.log(newVersion);
+      console.log(`Updating version: ${version} -> ${newVersion}`);
     }
     if (isMinor) {
-      console.log("Minor label found");
+      console.log("🚀 Minor label found");
       const newVersion =
         version.split(".")[0] +
         "." +
         (Number(version.split(".")[1]) + 1) +
         ".0";
-      console.log(newVersion);
+      console.log(`Updating version: ${version} -> ${newVersion}`);
     }
     if (isPatch) {
-      console.log("Patch label found");
-      const newVersion =
+      console.log("🔧 Patch label found");
+      newVersion =
         version.split(".")[0] +
         "." +
         version.split(".")[1] +
         "." +
         (Number(version.split(".")[2]) + 1);
-      console.log(newVersion);
+      console.log(`Updating version: ${version} -> ${newVersion}`);
+    }
+
+    if (newVersion !== version) {
+      // Update package.json with the new version
+      const packageJsonPath = path.join(__dirname, "package.json");
+      const packageJson = JSON.parse(
+        await fs.promises.readFile(packageJsonPath, "utf-8")
+      );
+      packageJson.version = newVersion;
+      await fs.promises.writeFile(
+        packageJsonPath,
+        JSON.stringify(packageJson, null, 2)
+      );
+
+      // Commit the changes to the target branch
+      await octokit.rest.repos.createOrUpdateFileContents({
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        path: "package.json",
+        message: `Update version from ${version} to ${newVersion}`,
+        content: Buffer.from(JSON.stringify(packageJson, null, 2)).toString(
+          "base64"
+        ),
+        branch: context.ref.split("/").pop(), // Assuming the target branch is the current ref
+      });
     }
 
     // Add the new label

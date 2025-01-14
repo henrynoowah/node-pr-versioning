@@ -45,14 +45,17 @@ async function run() {
   console.group("🎉 Major Labels:");
   majorLabels.forEach((label) => console.log(`- ${label}`));
   console.groupEnd();
+  console.log(); // Empty space
 
   console.group("🚀 Minor Labels:");
   minorLabels.forEach((label) => console.log(`- ${label}`));
   console.groupEnd();
+  console.log(); // Empty space
 
   console.group("🔧 Patch Labels:");
   patchLabels.forEach((label) => console.log(`- ${label}`));
   console.groupEnd();
+  console.log(); // Empty space
 
   const skipCommit = getInput("skip-commit");
   const createTag = getInput("create-tag");
@@ -87,6 +90,7 @@ async function run() {
     console.group("Existing labels:");
     existingLabels.forEach((label) => console.log(`- ${label}`));
     console.groupEnd();
+    console.log(); // Empty space
 
     const isMajor = existingLabels.some((label) => majorLabels.includes(label));
     const isMinor = existingLabels.some((label) => minorLabels.includes(label));
@@ -96,12 +100,10 @@ async function run() {
 
     if (isMajor) {
       console.log("🎉 Major label found");
-
       newVersion = Number(version.split(".")[0]) + 1 + ".0.0";
     }
     if (isMinor) {
       console.log("🚀 Minor label found");
-
       newVersion =
         version.split(".")[0] +
         "." +
@@ -123,7 +125,9 @@ async function run() {
     console.log(`Expected version update: ${version} -> ${newVersion}`);
     setOutput("new-version", newVersion);
 
-    if (!skipCommit) {
+    if (skipCommit) {
+      console.log("skipping commit");
+    } else {
       console.log("packageJsonPath", packageJsonPath);
 
       const packageJson = JSON.parse(
@@ -152,32 +156,14 @@ async function run() {
       const tagName = skipCommit ? version : newVersion;
 
       console.log(`Creating Tag: ${tagName}`);
-
-      // First, get the reference to the current commit
-      const { data: ref } = await octokit.rest.git.getRef({
-        owner: context.repo.owner,
-        repo: context.repo.repo,
-        ref: `heads/${pullRequest.head.ref}`,
-      });
-
-      // Create the tag pointing to the current commit
-      const { data: tagData } = await octokit.rest.git.createTag({
-        owner: context.repo.owner,
-        repo: context.repo.repo,
-        tag: tagName,
-        message: `create tag ${tagName}`,
-        object: ref.object.sha,
-        type: "commit",
-      });
-
-      console.log(tagData);
+      console.log(); // Empty space
 
       // Create a reference to the new tag
       await octokit.rest.git.createRef({
         owner: context.repo.owner,
         repo: context.repo.repo,
         ref: `refs/tags/${tagName}`,
-        sha: tagData.sha,
+        sha: (currentFile as any).sha,
       });
 
       console.log(`Tag ${tagName} created successfully`);

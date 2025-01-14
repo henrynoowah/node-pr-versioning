@@ -25,6 +25,20 @@ async function run() {
       setFailed("This action should only be run on a pull request");
       return;
     }
+
+    // Fetch existing labels from the pull request
+    const { data: pullRequestData } = await octokit.rest.pulls.get({
+      owner: context.repo.owner,
+      repo: context.repo.repo,
+      pull_number: pullRequest.number,
+    });
+
+    const existingLabels = pullRequestData.labels.map((label) => label.name);
+    console.group("Existing labels:");
+    existingLabels.forEach((label) => console.log(label));
+    console.groupEnd();
+
+    // Add the new label
     await octokit.rest.issues.addLabels({
       owner: context.repo.owner,
       repo: context.repo.repo,

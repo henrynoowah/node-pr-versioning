@@ -43,17 +43,24 @@ async function run() {
     const pullRequest = github_1.context.payload.pull_request;
     if (!isPushEvent && !pullRequest)
         return (0, core_1.setFailed)("This action should only be run on a push event or a pull request");
-    if (isPushEvent && pullRequest) {
-        // Fetch pull request data using the head ref
+    if (isPushEvent) {
+        // Fetch the pull requests associated with the branch that triggered the push event
         const octokit = (0, github_1.getOctokit)(token);
-        const { data: prData } = await octokit.rest.pulls.get({
+        const { data: pullRequests } = await octokit.rest.pulls.list({
             owner: github_1.context.repo.owner,
             repo: github_1.context.repo.repo,
-            pull_number: pullRequest.number,
+            state: "closed", // Only consider closed PRs since the push event was triggered by a merge
+            head: `${github_1.context.repo.owner}:${github_1.context.payload.ref}`,
         });
-        const labels = prData.labels.map((label) => label.name);
-        console.log("Push event from PR:", pullRequest.number);
-        console.log("Labels associated with the PR:", labels);
+        if (pullRequests.length > 0) {
+            const pullRequest = pullRequests[0]; // Get the first closed PR associated with the branch
+            const labels = pullRequest.labels.map((label) => label.name);
+            console.log("Push event from merged PR:", pullRequest.number);
+            console.log("Labels associated with the PR:", labels);
+        }
+        else {
+            console.log("No associated pull request found for this push event.");
+        }
     }
     // #region Pull Request task
     // #region Push or Pull Request task

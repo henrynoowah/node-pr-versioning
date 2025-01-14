@@ -9,11 +9,12 @@ async function run() {
   // const minorLabel = getInput("minor-label");
   // const majorLabel = getInput("major-label");
   // const patchLabel = getInput("patch-label");
-  const packageJsonPath = `${process.env.GITHUB_WORKSPACE}/package.json`;
+
+  const packageJsonPath = `${process.cwd()}/package.json`;
   const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
   const version = packageJson.version;
 
-  console.log(`Current version: ${version}`);
+  console.log(version);
 
   // const octokit = getOctokit(token);
 

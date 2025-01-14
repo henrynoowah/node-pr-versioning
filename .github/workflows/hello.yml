@@ -11,3 +11,4 @@ jobs:
       - uses: ./
         with:
           name: "Noowah"
+          gh-token: ${{ secrets.GITHUB_TOKEN }}

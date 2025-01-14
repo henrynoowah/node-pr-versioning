@@ -49,7 +49,8 @@ const fs_1 = __importStar(__nccwpck_require__(9896));
 const path_1 = __importDefault(__nccwpck_require__(6928));
 async function run() {
     const token = (0, core_1.getInput)("gh-token");
-    const label = (0, core_1.getInput)("label");
+    if (!token)
+        return (0, core_1.setFailed)("GitHub token is required");
     const minorLabel = (0, core_1.getInput)("labels-minor")
         .split(",")
         .map((label) => label.trim());
@@ -108,14 +109,11 @@ async function run() {
                     (Number(version.split(".")[2]) + 1);
             console.log(`Updating version: ${version} -> ${newVersion}`);
         }
-        const headRef = pullRequest.head.ref;
-        console.log(headRef, newVersion, version, newVersion !== version);
         if (newVersion !== version) {
             // Update package.json with the new version
             const packageJsonPath = path_1.default.join(__dirname, "package.json");
             console.log("packageJsonPath", packageJsonPath);
             const packageJson = JSON.parse(await fs_1.default.promises.readFile(packageJsonPath, "utf-8"));
-            console.log("packageJson", packageJson);
             packageJson.version = newVersion;
             await fs_1.default.promises.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2));
             // Commit the changes to the target branch
@@ -123,9 +121,10 @@ async function run() {
                 owner: github_1.context.repo.owner,
                 repo: github_1.context.repo.repo,
                 path: "package.json",
-                message: `Update version from ${version} to ${newVersion}`,
+                message: `node-pr-versioning: Update version from ${version} to ${newVersion}`,
                 content: Buffer.from(JSON.stringify(packageJson, null, 2)).toString("base64"),
                 branch: pullRequest.head.ref, // Use the head branch of the PR
+                sha: pullRequestData.head.sha,
             });
         }
     }

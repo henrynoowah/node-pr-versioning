@@ -5,7 +5,7 @@ import path from "path";
 
 async function run() {
   const token = getInput("gh-token");
-  const label = getInput("label");
+  if (!token) return setFailed("GitHub token is required");
 
   const minorLabel = getInput("labels-minor")
     .split(",")
@@ -60,36 +60,37 @@ async function run() {
     }
     if (isMinor) {
       console.log("🚀 Minor label found");
+
       newVersion =
         version.split(".")[0] +
         "." +
         (Number(version.split(".")[1]) + 1) +
         ".0";
+
       console.log(`Updating version: ${version} -> ${newVersion}`);
     }
     if (isPatch) {
       console.log("🔧 Patch label found");
+
       newVersion =
         version.split(".")[0] +
         "." +
         version.split(".")[1] +
         "." +
         (Number(version.split(".")[2]) + 1);
+
       console.log(`Updating version: ${version} -> ${newVersion}`);
     }
-
-    const headRef = pullRequest.head.ref;
-    console.log(headRef, newVersion, version, newVersion !== version);
 
     if (newVersion !== version) {
       // Update package.json with the new version
       const packageJsonPath = path.join(__dirname, "package.json");
+
       console.log("packageJsonPath", packageJsonPath);
+
       const packageJson = JSON.parse(
         await fs.promises.readFile(packageJsonPath, "utf-8")
       );
-
-      console.log("packageJson", packageJson);
 
       packageJson.version = newVersion;
       await fs.promises.writeFile(
@@ -102,11 +103,12 @@ async function run() {
         owner: context.repo.owner,
         repo: context.repo.repo,
         path: "package.json",
-        message: `Update version from ${version} to ${newVersion}`,
+        message: `node-pr-versioning: Update version from ${version} to ${newVersion}`,
         content: Buffer.from(JSON.stringify(packageJson, null, 2)).toString(
           "base64"
         ),
         branch: pullRequest.head.ref, // Use the head branch of the PR
+        sha: pullRequestData.head.sha,
       });
     }
   } catch (error) {

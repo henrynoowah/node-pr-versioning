@@ -189,7 +189,7 @@ async function run() {
         });
       }
       if (createTag) {
-        const tagName = skipCommit ? version : newVersion;
+        const tagName = !!skipCommit ? version : newVersion;
 
         console.log(`Creating Tag: ${tagName}`);
         console.log(); // Empty space

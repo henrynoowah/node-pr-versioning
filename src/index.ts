@@ -83,8 +83,10 @@ async function run() {
     console.groupEnd();
     console.log(); // Empty space
 
-    const skipCommit = getInput("skip-commit") === "false";
-    const createTag = getInput("create-tag") === "true";
+    const skipCommit = Boolean(getInput("skip-commit") === "false");
+    const createTag = Boolean(getInput("create-tag") === "true");
+    console.log("skipCommit", skipCommit);
+    console.log("createTag", createTag);
 
     const customPath = getInput("path");
 
@@ -160,7 +162,7 @@ async function run() {
       console.log(`Expected version update: ${version} -> ${newVersion}`);
       setOutput("new-version", newVersion);
 
-      if (!!skipCommit) {
+      if (skipCommit) {
         console.log("skipping commit");
         console.log(); // Empty space
       } else {

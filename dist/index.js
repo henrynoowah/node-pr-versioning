@@ -130,15 +130,30 @@ async function run() {
         if (createTag) {
             const tagName = skipCommit ? version : newVersion;
             console.log(`Creating Tag: ${tagName}`);
-            const { data, ...rest } = await octokit.rest.git.createTag({
+            // First, get the reference to the current commit
+            const { data: ref } = await octokit.rest.git.getRef({
+                owner: github_1.context.repo.owner,
+                repo: github_1.context.repo.repo,
+                ref: `heads/${pullRequest.head.ref}`,
+            });
+            // Create the tag pointing to the current commit
+            const { data: tagData } = await octokit.rest.git.createTag({
                 owner: github_1.context.repo.owner,
                 repo: github_1.context.repo.repo,
                 tag: tagName,
                 message: `create tag ${tagName}`,
-                object: currentFile.sha, // Add the current file's SHA as the object
-                type: "commit", // Specify the type as "commit"
+                object: ref.object.sha,
+                type: "commit",
             });
-            console.log(data);
+            console.log(tagData);
+            // Create a reference to the new tag
+            await octokit.rest.git.createRef({
+                owner: github_1.context.repo.owner,
+                repo: github_1.context.repo.repo,
+                ref: `refs/tags/${tagName}`,
+                sha: tagData.sha,
+            });
+            console.log(`Tag ${tagName} created successfully`);
         }
     }
     catch (error) {

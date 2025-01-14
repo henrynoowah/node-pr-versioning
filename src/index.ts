@@ -98,7 +98,14 @@ async function run() {
         JSON.stringify(packageJson, null, 2)
       );
 
-      // Commit the changes to the target branch
+      // Get the current file's SHA
+      const { data: currentFile } = await octokit.rest.repos.getContent({
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        path: "package.json",
+        ref: pullRequest.head.ref,
+      });
+
       await octokit.rest.repos.createOrUpdateFileContents({
         owner: context.repo.owner,
         repo: context.repo.repo,
@@ -107,8 +114,8 @@ async function run() {
         content: Buffer.from(JSON.stringify(packageJson, null, 2)).toString(
           "base64"
         ),
-        branch: pullRequest.head.ref, // Use the head branch of the PR
-        sha: pullRequestData.head.sha,
+        branch: pullRequest.head.ref,
+        sha: (currentFile as any).sha, // Use the current file's SHA
       });
     }
   } catch (error) {

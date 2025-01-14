@@ -116,15 +116,21 @@ async function run() {
             const packageJson = JSON.parse(await fs_1.default.promises.readFile(packageJsonPath, "utf-8"));
             packageJson.version = newVersion;
             await fs_1.default.promises.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2));
-            // Commit the changes to the target branch
+            // Get the current file's SHA
+            const { data: currentFile } = await octokit.rest.repos.getContent({
+                owner: github_1.context.repo.owner,
+                repo: github_1.context.repo.repo,
+                path: "package.json",
+                ref: pullRequest.head.ref,
+            });
             await octokit.rest.repos.createOrUpdateFileContents({
                 owner: github_1.context.repo.owner,
                 repo: github_1.context.repo.repo,
                 path: "package.json",
                 message: `node-pr-versioning: Update version from ${version} to ${newVersion}`,
                 content: Buffer.from(JSON.stringify(packageJson, null, 2)).toString("base64"),
-                branch: pullRequest.head.ref, // Use the head branch of the PR
-                sha: pullRequestData.head.sha,
+                branch: pullRequest.head.ref,
+                sha: currentFile.sha, // Use the current file's SHA
             });
         }
     }

@@ -160,7 +160,7 @@ async function run() {
       console.log(`Expected version update: ${version} -> ${newVersion}`);
       setOutput("new-version", newVersion);
 
-      if (skipCommit) {
+      if (!!skipCommit) {
         console.log("skipping commit");
         console.log(); // Empty space
       } else {

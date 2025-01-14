@@ -83,8 +83,8 @@ async function run() {
     console.groupEnd();
     console.log(); // Empty space
 
-    const skipCommit = getInput("skip-commit");
-    const createTag = getInput("create-tag");
+    const skipCommit = getInput("skip-commit") === "false";
+    const createTag = getInput("create-tag") === "true";
 
     const customPath = getInput("path");
 

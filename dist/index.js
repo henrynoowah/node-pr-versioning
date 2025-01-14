@@ -86,8 +86,8 @@ async function run() {
         patchLabels.forEach((label) => console.log(`- ${label}`));
         console.groupEnd();
         console.log(); // Empty space
-        const skipCommit = (0, core_1.getInput)("skip-commit");
-        const createTag = (0, core_1.getInput)("create-tag");
+        const skipCommit = (0, core_1.getInput)("skip-commit") === "false";
+        const createTag = (0, core_1.getInput)("create-tag") === "true";
         const customPath = (0, core_1.getInput)("path");
         const packageJsonPath = customPath !== null && customPath !== void 0 ? customPath : "package.json";
         const octokit = (0, github_1.getOctokit)(token);

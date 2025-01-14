@@ -113,6 +113,8 @@ async function run() {
             const packageJson = JSON.parse(await fs_1.default.promises.readFile(packageJsonPath, "utf-8"));
             packageJson.version = newVersion;
             await fs_1.default.promises.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2));
+            const headRef = pullRequest.head.ref;
+            console.log(headRef);
             // Commit the changes to the target branch
             await octokit.rest.repos.createOrUpdateFileContents({
                 owner: github_1.context.repo.owner,

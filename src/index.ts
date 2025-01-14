@@ -47,7 +47,7 @@ async function run() {
   const createTag = getInput("create-tag");
   const customPath = getInput("path");
 
-  const packageJsonPath = customPath || "package.json";
+  const packageJsonPath = customPath ?? "package.json";
   const { data: packageJsonResponse } = await octokit.rest.repos.getContent({
     owner: context.repo.owner,
     repo: context.repo.repo,

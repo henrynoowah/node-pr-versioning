@@ -36,18 +36,24 @@ async function run() {
       "This action should only be run on a push event or a pull request"
     );
 
-  if (isPushEvent && pullRequest) {
-    // Fetch pull request data using the head ref
+  if (isPushEvent) {
+    // Fetch the pull requests associated with the branch that triggered the push event
     const octokit = getOctokit(token);
-    const { data: prData } = await octokit.rest.pulls.get({
+    const { data: pullRequests } = await octokit.rest.pulls.list({
       owner: context.repo.owner,
       repo: context.repo.repo,
-      pull_number: pullRequest.number,
+      state: "closed", // Only consider closed PRs since the push event was triggered by a merge
+      head: `${context.repo.owner}:${context.payload.ref}`,
     });
 
-    const labels = prData.labels.map((label) => label.name);
-    console.log("Push event from PR:", pullRequest.number);
-    console.log("Labels associated with the PR:", labels);
+    if (pullRequests.length > 0) {
+      const pullRequest = pullRequests[0]; // Get the first closed PR associated with the branch
+      const labels = pullRequest.labels.map((label) => label.name);
+      console.log("Push event from merged PR:", pullRequest.number);
+      console.log("Labels associated with the PR:", labels);
+    } else {
+      console.log("No associated pull request found for this push event.");
+    }
   }
   // #region Pull Request task
   // #region Push or Pull Request task
@@ -77,8 +83,16 @@ async function run() {
     console.groupEnd();
     console.log(); // Empty space
 
-    const skipCommit = getInput("skip-commit");
-    const createTag = getInput("create-tag");
+    const skipCommitInput = getInput("skip-commit");
+    const skipCommit = skipCommitInput === "true";
+
+    const createTagInput = getInput("create-tag");
+    const createTag =
+      createTagInput === "false" ? true : Boolean(createTagInput);
+
+    console.log("skipCommit", skipCommit);
+    console.log("createTag", createTag);
+    console.log("createTag", createTag);
 
     const customPath = getInput("path");
 
@@ -183,7 +197,7 @@ async function run() {
         });
       }
       if (createTag) {
-        const tagName = skipCommit ? version : newVersion;
+        const tagName = !!skipCommit ? version : newVersion;
 
         console.log(`Creating Tag: ${tagName}`);
         console.log(); // Empty space

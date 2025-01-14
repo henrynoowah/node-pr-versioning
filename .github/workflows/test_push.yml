@@ -15,5 +15,4 @@ jobs:
           labels-minor: "enhancement"
           labels-major: "major"
           labels-patch: "chore, bug"
-          skip-commit: true
           create-tag: true

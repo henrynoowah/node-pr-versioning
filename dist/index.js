@@ -78,7 +78,7 @@ async function run() {
         });
         const existingLabels = pullRequestData.labels.map((label) => label.name);
         console.group("Existing labels:");
-        existingLabels.forEach((label) => console.log(label));
+        existingLabels.forEach((label) => console.log(`- ${label}`));
         console.groupEnd();
         const isMajor = existingLabels.some((label) => majorLabel.includes(label));
         const isMinor = existingLabels.some((label) => minorLabel.includes(label));
@@ -120,7 +120,7 @@ async function run() {
                 path: "package.json",
                 message: `Update version from ${version} to ${newVersion}`,
                 content: Buffer.from(JSON.stringify(packageJson, null, 2)).toString("base64"),
-                branch: github_1.context.ref.split("/").pop(), // Assuming the target branch is the current ref
+                branch: pullRequest.head.ref, // Use the head branch of the PR
             });
         }
     }

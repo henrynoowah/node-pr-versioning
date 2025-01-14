@@ -48,16 +48,18 @@ async function run() {
   const customPath = getInput("path");
 
   const packageJsonPath = customPath || "package.json";
-
-  const { data: packageJson } = await octokit.rest.repos.getContent({
+  const { data: packageJsonResponse } = await octokit.rest.repos.getContent({
     owner: context.repo.owner,
     repo: context.repo.repo,
-    path: "package.json",
+    path: packageJsonPath,
     ref: pullRequest.head.ref,
   });
 
-  // const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
-  const version = JSON.parse((packageJson as any).content).version;
+  const packageJson = Buffer.from(
+    (packageJsonResponse as any).content,
+    "base64"
+  ).toString("utf-8");
+  const version = JSON.parse(packageJson).version;
 
   console.log(version);
 

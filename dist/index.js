@@ -54,14 +54,14 @@ async function run() {
     const createTag = (0, core_1.getInput)("create-tag");
     const customPath = (0, core_1.getInput)("path");
     const packageJsonPath = customPath || "package.json";
-    const { data: packageJson } = await octokit.rest.repos.getContent({
+    const { data: packageJsonResponse } = await octokit.rest.repos.getContent({
         owner: github_1.context.repo.owner,
         repo: github_1.context.repo.repo,
-        path: "package.json",
+        path: packageJsonPath,
         ref: pullRequest.head.ref,
     });
-    // const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
-    const version = JSON.parse(packageJson.content).version;
+    const packageJson = Buffer.from(packageJsonResponse.content, "base64").toString("utf-8");
+    const version = JSON.parse(packageJson).version;
     console.log(version);
     try {
         // Fetch existing labels from the pull request

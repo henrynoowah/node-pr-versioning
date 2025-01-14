@@ -11,5 +11,7 @@ jobs:
       - uses: "actions/checkout@v4"
       - uses: ./
         with:
-          label: "Noowah"
           gh-token: ${{ secrets.GITHUB_TOKEN }}
+          labels-minor: "enhancement"
+          labels-major: "major"
+          labels-patch: "chore, bug"

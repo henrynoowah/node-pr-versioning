@@ -6,9 +6,15 @@ async function run() {
   const token = getInput("gh-token");
   const label = getInput("label");
 
-  const minorLabel = getInput("minor-label");
-  const majorLabel = getInput("major-label");
-  const patchLabel = getInput("patch-label");
+  const minorLabel = getInput("labels-minor")
+    .split(",")
+    .map((label) => label.trim());
+  const majorLabel = getInput("labels-major")
+    .split(",")
+    .map((label) => label.trim());
+  const patchLabel = getInput("labels-patch")
+    .split(",")
+    .map((label) => label.trim());
 
   const packageJsonPath = `${process.cwd()}/package.json`;
   const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
@@ -37,6 +43,20 @@ async function run() {
     console.group("Existing labels:");
     existingLabels.forEach((label) => console.log(label));
     console.groupEnd();
+
+    const isMajor = existingLabels.some((label) => majorLabel.includes(label));
+    const isMinor = existingLabels.some((label) => minorLabel.includes(label));
+    const isPatch = existingLabels.some((label) => patchLabel.includes(label));
+
+    if (isMajor) {
+      console.log("Major label found");
+    }
+    if (isMinor) {
+      console.log("Minor label found");
+    }
+    if (isPatch) {
+      console.log("Patch label found");
+    }
 
     // Add the new label
     await octokit.rest.issues.addLabels({

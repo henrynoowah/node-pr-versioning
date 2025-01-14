@@ -6,8 +6,14 @@ inputs:
   gh-token:
     description: "The GitHub token for authentication"
     required: true
-  label:
-    description: "The label to add to the PR"
+  label-minor:
+    description: "The label to update Minor version"
+    required: true
+  label-major:
+    description: "The label to update Major version"
+    required: true
+  label-patch:
+    description: "The label to update Patch version"
     required: true
 
 runs:

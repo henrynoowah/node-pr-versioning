@@ -31823,9 +31823,15 @@ const fs_1 = __nccwpck_require__(9896);
 async function run() {
     const token = (0, core_1.getInput)("gh-token");
     const label = (0, core_1.getInput)("label");
-    const minorLabel = (0, core_1.getInput)("minor-label");
-    const majorLabel = (0, core_1.getInput)("major-label");
-    const patchLabel = (0, core_1.getInput)("patch-label");
+    const minorLabel = (0, core_1.getInput)("labels-minor")
+        .split(",")
+        .map((label) => label.trim());
+    const majorLabel = (0, core_1.getInput)("labels-major")
+        .split(",")
+        .map((label) => label.trim());
+    const patchLabel = (0, core_1.getInput)("labels-patch")
+        .split(",")
+        .map((label) => label.trim());
     const packageJsonPath = __nccwpck_require__.ab + "package.json";
     const packageJson = JSON.parse((0, fs_1.readFileSync)(__nccwpck_require__.ab + "package.json", "utf-8"));
     const version = packageJson.version;
@@ -31847,6 +31853,18 @@ async function run() {
         console.group("Existing labels:");
         existingLabels.forEach((label) => console.log(label));
         console.groupEnd();
+        const isMajor = existingLabels.some((label) => majorLabel.includes(label));
+        const isMinor = existingLabels.some((label) => minorLabel.includes(label));
+        const isPatch = existingLabels.some((label) => patchLabel.includes(label));
+        if (isMajor) {
+            console.log("Major label found");
+        }
+        if (isMinor) {
+            console.log("Minor label found");
+        }
+        if (isPatch) {
+            console.log("Patch label found");
+        }
         // Add the new label
         await octokit.rest.issues.addLabels({
             owner: github_1.context.repo.owner,

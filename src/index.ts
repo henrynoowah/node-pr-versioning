@@ -28,6 +28,11 @@ async function run() {
 
   const pullRequest = context.payload.pull_request;
 
+  if (!pullRequest)
+    return setFailed("This action should only be run on a pull request");
+
+  const octokit = getOctokit(token);
+
   const minorLabel = getInput("labels-minor")
     .split(",")
     .map((label) => label.trim());
@@ -42,23 +47,21 @@ async function run() {
   const createTag = getInput("create-tag");
   const customPath = getInput("path");
 
-  const packageJsonPath = path.join(
-    process.cwd(),
-    customPath || "package.json"
-  );
-  const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
-  const version = packageJson.version;
+  const packageJsonPath = customPath || "package.json";
+
+  const { data: packageJson } = await octokit.rest.repos.getContent({
+    owner: context.repo.owner,
+    repo: context.repo.repo,
+    path: "package.json",
+    ref: pullRequest.head.ref,
+  });
+
+  // const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
+  const version = JSON.parse((packageJson as any).content).version;
 
   console.log(version);
 
-  const octokit = getOctokit(token);
-
   try {
-    if (!pullRequest) {
-      setFailed("This action should only be run on a pull request");
-      return;
-    }
-
     // Fetch existing labels from the pull request
     const { data: pullRequestData } = await octokit.rest.pulls.get({
       owner: context.repo.owner,

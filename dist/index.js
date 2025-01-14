@@ -41,20 +41,28 @@ async function run() {
     if (!pullRequest)
         return (0, core_1.setFailed)("This action should only be run on a pull request");
     const octokit = (0, github_1.getOctokit)(token);
-    const minorLabel = (0, core_1.getInput)("labels-minor")
+    const minorLabels = (0, core_1.getInput)("labels-minor")
         .split(",")
         .map((label) => label.trim());
-    const majorLabel = (0, core_1.getInput)("labels-major")
+    const majorLabels = (0, core_1.getInput)("labels-major")
         .split(",")
         .map((label) => label.trim());
-    const patchLabel = (0, core_1.getInput)("labels-patch")
+    const patchLabels = (0, core_1.getInput)("labels-patch")
         .split(",")
         .map((label) => label.trim());
+    console.group("🎉 Major Labels:");
+    majorLabels.forEach((label) => console.log(`- ${label}`));
+    console.groupEnd();
+    console.group("🚀 Minor Labels:");
+    minorLabels.forEach((label) => console.log(`- ${label}`));
+    console.groupEnd();
+    console.group("🔧 Patch Labels:");
+    patchLabels.forEach((label) => console.log(`- ${label}`));
+    console.groupEnd();
     const skipCommit = (0, core_1.getInput)("skip-commit");
     const createTag = (0, core_1.getInput)("create-tag");
     const customPath = (0, core_1.getInput)("path");
     const packageJsonPath = customPath !== null && customPath !== void 0 ? customPath : "package.json";
-    console.log("packageJsonPath", packageJsonPath);
     const { data: currentFile } = await octokit.rest.repos.getContent({
         owner: github_1.context.repo.owner,
         repo: github_1.context.repo.repo,
@@ -75,9 +83,9 @@ async function run() {
         console.group("Existing labels:");
         existingLabels.forEach((label) => console.log(`- ${label}`));
         console.groupEnd();
-        const isMajor = existingLabels.some((label) => majorLabel.includes(label));
-        const isMinor = existingLabels.some((label) => minorLabel.includes(label));
-        const isPatch = existingLabels.some((label) => patchLabel.includes(label));
+        const isMajor = existingLabels.some((label) => majorLabels.includes(label));
+        const isMinor = existingLabels.some((label) => minorLabels.includes(label));
+        const isPatch = existingLabels.some((label) => patchLabels.includes(label));
         let newVersion = version;
         if (isMajor) {
             console.log("🎉 Major label found");
@@ -112,23 +120,37 @@ async function run() {
             await octokit.rest.repos.createOrUpdateFileContents({
                 owner: github_1.context.repo.owner,
                 repo: github_1.context.repo.repo,
-                path: "package.json",
-                message: `node-pr-versioning: Update version from ${version} to ${newVersion}`,
+                path: packageJsonPath,
+                message: `commit version update: ${version} -> ${newVersion}`,
                 content: Buffer.from(JSON.stringify(packageJson, null, 2)).toString("base64"),
                 branch: pullRequest.head.ref,
                 sha: currentFile.sha, // Use the current file's SHA
             });
         }
         if (createTag) {
-            console.log(`Creating Tag: ${newVersion}`);
-            await octokit.rest.git.createTag({
+            const tagName = skipCommit ? version : newVersion;
+            console.log(`Checking if tag already exists: ${tagName}`);
+            const { data: tag } = await octokit.rest.git.getTag({
                 owner: github_1.context.repo.owner,
                 repo: github_1.context.repo.repo,
-                tag: newVersion,
-                message: `node-pr-versioning: Update version from ${version} to ${newVersion}`,
-                object: currentFile.sha, // Add the current file's SHA as the object
-                type: "commit", // Specify the type as "commit"
+                tag: tagName,
+                tag_sha: currentFile.sha,
             });
+            console.log(tag);
+            if (!!tag) {
+                console.log(`Tag ${tagName} already exists. Skipping tag creation.`);
+            }
+            else {
+                console.log(`Creating Tag: ${tagName}`);
+                await octokit.rest.git.createTag({
+                    owner: github_1.context.repo.owner,
+                    repo: github_1.context.repo.repo,
+                    tag: tagName,
+                    message: `create tag ${tagName}`,
+                    object: currentFile.sha, // Add the current file's SHA as the object
+                    type: "commit", // Specify the type as "commit"
+                });
+            }
         }
     }
     catch (error) {

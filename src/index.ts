@@ -1,7 +1,6 @@
 import { getInput, setFailed, setOutput } from "@actions/core";
 import { context, getOctokit } from "@actions/github";
-import fs, { readFileSync } from "fs";
-import path from "path";
+import fs from "fs";
 /**
  * Runs the versioning action for a GitHub pull request.
  *
@@ -33,15 +32,27 @@ async function run() {
 
   const octokit = getOctokit(token);
 
-  const minorLabel = getInput("labels-minor")
+  const minorLabels = getInput("labels-minor")
     .split(",")
     .map((label) => label.trim());
-  const majorLabel = getInput("labels-major")
+  const majorLabels = getInput("labels-major")
     .split(",")
     .map((label) => label.trim());
-  const patchLabel = getInput("labels-patch")
+  const patchLabels = getInput("labels-patch")
     .split(",")
     .map((label) => label.trim());
+
+  console.group("🎉 Major Labels:");
+  majorLabels.forEach((label) => console.log(`- ${label}`));
+  console.groupEnd();
+
+  console.group("🚀 Minor Labels:");
+  minorLabels.forEach((label) => console.log(`- ${label}`));
+  console.groupEnd();
+
+  console.group("🔧 Patch Labels:");
+  patchLabels.forEach((label) => console.log(`- ${label}`));
+  console.groupEnd();
 
   const skipCommit = getInput("skip-commit");
   const createTag = getInput("create-tag");
@@ -49,7 +60,6 @@ async function run() {
 
   const packageJsonPath = customPath ?? "package.json";
 
-  console.log("packageJsonPath", packageJsonPath);
   const { data: currentFile } = await octokit.rest.repos.getContent({
     owner: context.repo.owner,
     repo: context.repo.repo,
@@ -78,9 +88,9 @@ async function run() {
     existingLabels.forEach((label) => console.log(`- ${label}`));
     console.groupEnd();
 
-    const isMajor = existingLabels.some((label) => majorLabel.includes(label));
-    const isMinor = existingLabels.some((label) => minorLabel.includes(label));
-    const isPatch = existingLabels.some((label) => patchLabel.includes(label));
+    const isMajor = existingLabels.some((label) => majorLabels.includes(label));
+    const isMinor = existingLabels.some((label) => minorLabels.includes(label));
+    const isPatch = existingLabels.some((label) => patchLabels.includes(label));
 
     let newVersion = version;
 
@@ -129,8 +139,8 @@ async function run() {
       await octokit.rest.repos.createOrUpdateFileContents({
         owner: context.repo.owner,
         repo: context.repo.repo,
-        path: "package.json",
-        message: `node-pr-versioning: Update version from ${version} to ${newVersion}`,
+        path: packageJsonPath,
+        message: `commit version update: ${version} -> ${newVersion}`,
         content: Buffer.from(JSON.stringify(packageJson, null, 2)).toString(
           "base64"
         ),
@@ -139,15 +149,31 @@ async function run() {
       });
     }
     if (createTag) {
-      console.log(`Creating Tag: ${newVersion}`);
-      await octokit.rest.git.createTag({
+      const tagName = skipCommit ? version : newVersion;
+      console.log(`Checking if tag already exists: ${tagName}`);
+
+      const { data: tag } = await octokit.rest.git.getTag({
         owner: context.repo.owner,
         repo: context.repo.repo,
-        tag: newVersion,
-        message: `node-pr-versioning: Update version from ${version} to ${newVersion}`,
-        object: (currentFile as any).sha, // Add the current file's SHA as the object
-        type: "commit", // Specify the type as "commit"
+        tag: tagName,
+        tag_sha: (currentFile as any).sha,
       });
+
+      console.log(tag);
+
+      if (!!tag) {
+        console.log(`Tag ${tagName} already exists. Skipping tag creation.`);
+      } else {
+        console.log(`Creating Tag: ${tagName}`);
+        await octokit.rest.git.createTag({
+          owner: context.repo.owner,
+          repo: context.repo.repo,
+          tag: tagName,
+          message: `create tag ${tagName}`,
+          object: (currentFile as any).sha, // Add the current file's SHA as the object
+          type: "commit", // Specify the type as "commit"
+        });
+      }
     }
   } catch (error) {
     setFailed((error as Error).message);

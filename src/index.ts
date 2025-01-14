@@ -83,9 +83,15 @@ async function run() {
     console.groupEnd();
     console.log(); // Empty space
 
-    const skipCommit = Boolean(getInput("skip-commit") === "false");
-    const createTag = Boolean(getInput("create-tag") === "true");
+    const skipCommitInput = getInput("skip-commit");
+    const skipCommit = skipCommitInput === "true";
+
+    const createTagInput = getInput("create-tag");
+    const createTag =
+      createTagInput === "false" ? true : Boolean(createTagInput);
+
     console.log("skipCommit", skipCommit);
+    console.log("createTag", createTag);
     console.log("createTag", createTag);
 
     const customPath = getInput("path");

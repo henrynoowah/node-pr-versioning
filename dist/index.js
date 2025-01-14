@@ -86,9 +86,12 @@ async function run() {
         patchLabels.forEach((label) => console.log(`- ${label}`));
         console.groupEnd();
         console.log(); // Empty space
-        const skipCommit = Boolean((0, core_1.getInput)("skip-commit") === "false");
-        const createTag = Boolean((0, core_1.getInput)("create-tag") === "true");
+        const skipCommitInput = (0, core_1.getInput)("skip-commit");
+        const skipCommit = skipCommitInput === "true";
+        const createTagInput = (0, core_1.getInput)("create-tag");
+        const createTag = createTagInput === "false" ? true : Boolean(createTagInput);
         console.log("skipCommit", skipCommit);
+        console.log("createTag", createTag);
         console.log("createTag", createTag);
         const customPath = (0, core_1.getInput)("path");
         const packageJsonPath = customPath !== null && customPath !== void 0 ? customPath : "package.json";

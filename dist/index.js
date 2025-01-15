@@ -34,16 +34,32 @@ const fs_1 = __importDefault(__nccwpck_require__(9896));
  * @throws {Error} Throws an error if the GitHub token is missing or if the action is not run on a pull request.
  */
 async function run() {
-    // ? Check token
+    // #region Check token
     const token = (0, core_1.getInput)("github-token");
     if (!token)
         return (0, core_1.setFailed)("GitHub token is required");
-    // ? Check if the action is run on a push or pull request
-    const pullRequest = github_1.context.payload.pull_request;
+    // #endregion Check token
+    const octokit = (0, github_1.getOctokit)(token);
+    // #region get check & get pr information
+    const prNumber = (0, core_1.getInput)("pr-number");
+    let pullRequest;
+    if (prNumber) {
+        pullRequest = await octokit.rest.pulls
+            .get({
+            owner: github_1.context.repo.owner,
+            repo: github_1.context.repo.repo,
+            pull_number: Number(prNumber),
+        })
+            .then((response) => response.data);
+    }
+    else {
+        pullRequest = github_1.context.payload.pull_request;
+    }
+    console.log("pullRequest", pullRequest);
     if (!pullRequest)
         return (0, core_1.setFailed)("This action should only be run on a push event or a pull request");
+    // #region get check & get pr information
     // #region Pull Request task
-    // #region Push or Pull Request task
     const minorLabels = (0, core_1.getInput)("labels-minor")
         .split(",")
         .map((label) => label.trim());
@@ -74,7 +90,6 @@ async function run() {
     console.log("createTag", createTag);
     const customPath = (0, core_1.getInput)("path");
     const packageJsonPath = customPath !== null && customPath !== void 0 ? customPath : "package.json";
-    const octokit = (0, github_1.getOctokit)(token);
     const { data: currentFile } = await octokit.rest.repos.getContent({
         owner: github_1.context.repo.owner,
         repo: github_1.context.repo.repo,

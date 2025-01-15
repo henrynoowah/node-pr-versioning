@@ -122,7 +122,7 @@ async function run() {
                     (Number(version.split(".")[2]) + 1);
         }
         if (newVersion === version)
-            console.log("No version change detected");
+            return console.log("No version change detected");
         console.log(`Expected version update: ${version} -> ${newVersion}`);
         (0, core_1.setOutput)("new-version", newVersion);
         (0, core_1.setOutput)("pull-request-number", pullRequest.number);

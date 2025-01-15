@@ -1,5 +1,6 @@
 import { getInput, setFailed, setOutput } from "@actions/core";
 import { context, getOctokit } from "@actions/github";
+import { WebhookPayload } from "@actions/github/lib/interfaces";
 import fs from "fs";
 /**
  * Runs the versioning action for a GitHub pull request.
@@ -22,21 +23,41 @@ import fs from "fs";
  * @throws {Error} Throws an error if the GitHub token is missing or if the action is not run on a pull request.
  */
 async function run() {
-  // ? Check token
+  // #region Check token
   const token = getInput("github-token");
 
   if (!token) return setFailed("GitHub token is required");
+  // #endregion Check token
 
-  // ? Check if the action is run on a push or pull request
-  const pullRequest = context.payload.pull_request;
+  const octokit = getOctokit(token);
+
+  // #region get check & get pr information
+  const prNumber = getInput("pr-number");
+
+  let pullRequest;
+
+  if (prNumber) {
+    pullRequest = await octokit.rest.pulls
+      .get({
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        pull_number: Number(prNumber),
+      })
+      .then((response) => response.data);
+  } else {
+    pullRequest = context.payload.pull_request;
+  }
+
+  console.log("pullRequest", pullRequest);
 
   if (!pullRequest)
     return setFailed(
       "This action should only be run on a push event or a pull request"
     );
+  // #region get check & get pr information
 
   // #region Pull Request task
-  // #region Push or Pull Request task
+
   const minorLabels = getInput("labels-minor")
     .split(",")
     .map((label) => label.trim());
@@ -75,8 +96,6 @@ async function run() {
   const customPath = getInput("path");
 
   const packageJsonPath = customPath ?? "package.json";
-
-  const octokit = getOctokit(token);
 
   const { data: currentFile } = await octokit.rest.repos.getContent({
     owner: context.repo.owner,

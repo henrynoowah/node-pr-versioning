@@ -15,11 +15,11 @@ jobs:
           PR_NUMBER=$(git log -1 --pretty=%B | grep -oP '#\K[0-9]+' || echo '')
           echo "PR_NUMBER=$PR_NUMBER"
           echo "number=$PR_NUMBER" >> $GITHUB_OUTPUT
-      # - uses: ./
-      #   with:
-      #     github-token: ${{ secrets.GITHUB_TOKEN }}
-      #     labels-minor: "enhancement"
-      #     labels-major: "major"
-      #     labels-patch: "chore, bug"
-      #     create-tag: true
-      #     pr-number: ${{ steps.pr.outputs.number }}
+      - uses: ./
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          labels-minor: "enhancement"
+          labels-major: "major"
+          labels-patch: "chore, bug"
+          create-tag: true
+          pr-number: ${{ steps.pr.outputs.number }}

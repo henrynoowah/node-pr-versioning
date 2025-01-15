@@ -138,7 +138,9 @@ async function run() {
     if (newVersion === version) console.log("No version change detected");
 
     console.log(`Expected version update: ${version} -> ${newVersion}`);
+
     setOutput("new-version", newVersion);
+    setOutput("pull-request-number", pullRequest.number);
 
     if (skipCommit) {
       console.log("skipping commit");

@@ -9,10 +9,16 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - uses: "actions/checkout@v4"
-      - uses: ./
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          labels-minor: "enhancement"
-          labels-major: "major"
-          labels-patch: "chore, bug"
-          create-tag: true
+      - name: "Get PR number"
+        id: pr
+        run: |
+          PR_NUMBER=$(git log -1 --pretty=%B | grep -oP '#\K[0-9]+' || echo '')
+          echo "number=$PR_NUMBER" >> $GITHUB_OUTPUT
+      # - uses: ./
+      #   with:
+      #     github-token: ${{ secrets.GITHUB_TOKEN }}
+      #     labels-minor: "enhancement"
+      #     labels-major: "major"
+      #     labels-patch: "chore, bug"
+      #     create-tag: true
+      #     pr-number: ${{ steps.pr.outputs.number }}

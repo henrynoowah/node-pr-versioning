@@ -13,6 +13,7 @@ jobs:
         id: pr
         run: |
           PR_NUMBER=$(git log -1 --pretty=%B | grep -oP '#\K[0-9]+' || echo '')
+          echo "PR_NUMBER=$PR_NUMBER"
           echo "number=$PR_NUMBER" >> $GITHUB_OUTPUT
       # - uses: ./
       #   with:

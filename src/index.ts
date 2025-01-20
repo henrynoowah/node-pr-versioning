@@ -93,18 +93,18 @@ async function run() {
 
   const customPath = getInput("path");
 
-  const packageJsonPath = (
+  const path = (
     customPath
       ? customPath.replace(/\/\*\*/g, "") + "/package.json"
       : "/package.json"
   ).replace(/\.\//g, "");
 
-  console.log(packageJsonPath);
+  console.log("path:", path);
 
   const { data: currentFile } = await octokit.rest.repos.getContent({
     owner: context.repo.owner,
     repo: context.repo.repo,
-    path: packageJsonPath,
+    path,
     ref: pullRequest.head.ref,
   });
 
@@ -176,20 +176,15 @@ async function run() {
       console.log(`skipping version bump commit`);
       console.log(); // Empty space
     } else {
-      const packageJson = JSON.parse(
-        await fs.promises.readFile(packageJsonPath, "utf-8")
-      );
+      const packageJson = JSON.parse(await fs.promises.readFile(path, "utf-8"));
 
       packageJson.version = newVersion;
-      await fs.promises.writeFile(
-        packageJsonPath,
-        JSON.stringify(packageJson, null, 2)
-      );
+      await fs.promises.writeFile(path, JSON.stringify(packageJson, null, 2));
 
       await octokit.rest.repos.createOrUpdateFileContents({
         owner: context.repo.owner,
         repo: context.repo.repo,
-        path: packageJsonPath,
+        path,
         message: `commit version update: ${version} -> ${newVersion}`,
         content: Buffer.from(JSON.stringify(packageJson, null, 2)).toString(
           "base64"

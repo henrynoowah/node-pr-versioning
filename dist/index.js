@@ -89,7 +89,9 @@ async function run() {
     console.log("createTag", createTag);
     console.log("createTag", createTag);
     const customPath = (0, core_1.getInput)("path");
-    const packageJsonPath = customPath !== null && customPath !== void 0 ? customPath : "package.json";
+    const packageJsonPath = customPath
+        ? customPath.replace(/\/\*\*/g, "") + "/package.json"
+        : "/package.json";
     const { data: currentFile } = await octokit.rest.repos.getContent({
         owner: github_1.context.repo.owner,
         repo: github_1.context.repo.repo,
@@ -138,11 +140,12 @@ async function run() {
         }
         if (newVersion === version)
             return console.log("No version change detected");
-        console.log(`Expected version update: ${version} -> ${newVersion}`);
+        console.log(`Expected version bump: ${version} -> ${newVersion}`);
         (0, core_1.setOutput)("new-version", newVersion);
         (0, core_1.setOutput)("pull-request-number", pullRequest.number);
         if (skipCommit) {
-            console.log("skipping commit");
+            console.log(`skip commit: ${skipCommit}`);
+            console.log(`skipping version bump commit`);
             console.log(); // Empty space
         }
         else {
@@ -156,7 +159,7 @@ async function run() {
                 path: packageJsonPath,
                 message: `commit version update: ${version} -> ${newVersion}`,
                 content: Buffer.from(JSON.stringify(packageJson, null, 2)).toString("base64"),
-                branch: pullRequest.head.ref,
+                branch: pullRequest.base.ref,
                 sha: currentFile.sha, // Use the current file's SHA
             });
         }

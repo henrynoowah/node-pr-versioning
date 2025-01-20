@@ -21,11 +21,14 @@ inputs:
   path:
     description: "The path to the package.json file"
     required: false
-    default: "package.json"
+    default: "."
   create-tag:
     description: "Create a tag using new version"
     required: false
     default: "true"
+  pr-number:
+    description: "The pull request number"
+    required: false
 
 runs:
   using: "node16"

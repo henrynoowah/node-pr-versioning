@@ -1,6 +1,5 @@
 import { getInput, setFailed, setOutput } from "@actions/core";
 import { context, getOctokit } from "@actions/github";
-import { WebhookPayload } from "@actions/github/lib/interfaces";
 import fs from "fs";
 /**
  * Runs the versioning action for a GitHub pull request.
@@ -57,7 +56,6 @@ async function run() {
   // #region get check & get pr information
 
   // #region Pull Request task
-
   const minorLabels = getInput("labels-minor")
     .split(",")
     .map((label) => label.trim());
@@ -95,7 +93,9 @@ async function run() {
 
   const customPath = getInput("path");
 
-  const packageJsonPath = customPath ?? "package.json";
+  const packageJsonPath = customPath
+    ? customPath.replace(/\/\*\*/g, "") + "/package.json"
+    : "/package.json";
 
   const { data: currentFile } = await octokit.rest.repos.getContent({
     owner: context.repo.owner,
@@ -157,13 +157,14 @@ async function run() {
     if (newVersion === version)
       return console.log("No version change detected");
 
-    console.log(`Expected version update: ${version} -> ${newVersion}`);
+    console.log(`Expected version bump: ${version} -> ${newVersion}`);
 
     setOutput("new-version", newVersion);
     setOutput("pull-request-number", pullRequest.number);
 
     if (skipCommit) {
-      console.log("skipping commit");
+      console.log(`skip commit: ${skipCommit}`);
+      console.log(`skipping version bump commit`);
       console.log(); // Empty space
     } else {
       console.log("packageJsonPath", packageJsonPath);
@@ -186,7 +187,7 @@ async function run() {
         content: Buffer.from(JSON.stringify(packageJson, null, 2)).toString(
           "base64"
         ),
-        branch: pullRequest.head.ref,
+        branch: pullRequest.base.ref,
         sha: (currentFile as any).sha, // Use the current file's SHA
       });
     }

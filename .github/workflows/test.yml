@@ -2,7 +2,7 @@ name: "Test"
 
 on:
   pull_request:
-    branches: [dev]
+    branches: [main, dev]
     types: [opened, reopened, synchronize]
 
 jobs:

@@ -29,6 +29,10 @@ inputs:
   pr-number:
     description: "The pull request number"
     required: false
+  dry-run:
+    description: "Dry run the action"
+    required: false
+    default: "false"
 
 runs:
   using: "node16"

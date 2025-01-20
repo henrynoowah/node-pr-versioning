@@ -2,7 +2,7 @@ name: "Test"
 
 on:
   pull_request:
-    branches: [test]
+    branches: [dev]
     types: [opened, reopened, synchronize]
 
 jobs:
@@ -16,4 +16,5 @@ jobs:
           labels-minor: "enhancement"
           labels-major: "major"
           labels-patch: "chore, bug"
+          dry-run: true
           create-tag: true

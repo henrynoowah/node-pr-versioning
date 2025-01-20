@@ -69,6 +69,7 @@ async function run() {
     const patchLabels = (0, core_1.getInput)("labels-patch")
         .split(",")
         .map((label) => label.trim());
+    const dry_run = (0, core_1.getInput)("dry-run");
     console.group("🎉 Major Labels:");
     majorLabels.forEach((label) => console.log(`- ${label}`));
     console.groupEnd();
@@ -143,6 +144,10 @@ async function run() {
         console.log(`Expected version bump: ${version} -> ${newVersion}`);
         (0, core_1.setOutput)("new-version", newVersion);
         (0, core_1.setOutput)("pull-request-number", pullRequest.number);
+        if (dry_run) {
+            console.log("Dry run mode enabled. Skipping actual changes.");
+            return;
+        }
         if (skipCommit) {
             console.log(`skip commit: ${skipCommit}`);
             console.log(`skipping version bump commit`);

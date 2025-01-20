@@ -66,6 +66,8 @@ async function run() {
     .split(",")
     .map((label) => label.trim());
 
+  const dry_run = getInput("dry-run");
+
   console.group("🎉 Major Labels:");
   majorLabels.forEach((label) => console.log(`- ${label}`));
   console.groupEnd();
@@ -161,6 +163,11 @@ async function run() {
 
     setOutput("new-version", newVersion);
     setOutput("pull-request-number", pullRequest.number);
+
+    if (dry_run) {
+      console.log("Dry run mode enabled. Skipping actual changes.");
+      return;
+    }
 
     if (skipCommit) {
       console.log(`skip commit: ${skipCommit}`);

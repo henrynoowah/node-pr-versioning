@@ -16,7 +16,7 @@ jobs:
           echo "PR_NUMBER=$PR_NUMBER"
           echo "number=$PR_NUMBER" >> $GITHUB_OUTPUT
       - uses: ./
-        # if: ${{ steps.pr.outputs.number != '' }}
+        if: ${{ steps.pr.outputs.number != '' }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           labels-minor: "enhancement"

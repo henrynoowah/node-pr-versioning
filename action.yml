@@ -26,6 +26,10 @@ inputs:
     description: "Create a tag using new version"
     required: false
     default: "true"
+  tag-prefix:
+    description: "Tag prefix"
+    required: false
+    default: "v{{version}}"
   pr-number:
     description: "The pull request number"
     required: false

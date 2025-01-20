@@ -82,13 +82,13 @@ async function run() {
   console.log(); // Empty space
 
   const skipCommitInput = getInput("skip-commit");
-  const skipCommit = skipCommitInput === "true";
+  const skipCommit =
+    skipCommitInput === "true" ? true : Boolean(skipCommitInput);
 
   const createTagInput = getInput("create-tag");
   const createTag = createTagInput === "false" ? true : Boolean(createTagInput);
 
   console.log("skipCommit", skipCommit);
-  console.log("createTag", createTag);
   console.log("createTag", createTag);
 
   const customPath = getInput("path");
@@ -99,7 +99,7 @@ async function run() {
       : "/package.json"
   ).replace(/\.\//g, "");
 
-  console.log("path:", path);
+  console.log("\npath to package.json file:", path);
 
   const { data: currentFile } = await octokit.rest.repos.getContent({
     owner: context.repo.owner,
@@ -113,8 +113,6 @@ async function run() {
     "base64"
   ).toString("utf-8");
   const version = JSON.parse(packageJson).version;
-
-  console.log(version);
 
   try {
     // Fetch existing labels from the pull request
@@ -166,6 +164,11 @@ async function run() {
     setOutput("new-version", newVersion);
     setOutput("pull-request-number", pullRequest.number);
 
+    const tagPrefix = getInput("tag-prefix");
+    const tagName = `${tagPrefix.replace("{{version}}", newVersion)}`;
+
+    console.log("tag-name", tagName);
+
     if (dry_run) {
       console.log("Dry run mode enabled. Skipping actual changes.");
       return;
@@ -193,10 +196,8 @@ async function run() {
         sha: (currentFile as any).sha, // Use the current file's SHA
       });
     }
-    if (createTag && !dry_run) {
-      const tagName = !!skipCommit ? version : newVersion;
-
-      console.log(`Creating Tag: ${tagName}`);
+    if (createTag) {
+      console.log(`\nCreating Tag: ${tagName}`);
       console.log(); // Empty space
 
       // Create a reference to the new tag

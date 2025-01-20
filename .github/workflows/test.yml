@@ -18,3 +18,4 @@ jobs:
           labels-patch: "chore, bug"
           dry-run: true
           create-tag: true
+          tag-prefix: "@repo/admin@v{{version}}"

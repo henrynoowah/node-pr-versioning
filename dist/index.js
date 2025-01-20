@@ -89,9 +89,9 @@ async function run() {
     console.log("createTag", createTag);
     console.log("createTag", createTag);
     const customPath = (0, core_1.getInput)("path");
-    const packageJsonPath = customPath
+    const packageJsonPath = (customPath
         ? customPath.replace(/\/\*\*/g, "") + "/package.json"
-        : "/package.json";
+        : "/package.json").replace(/\.\//g, "");
     console.log(packageJsonPath);
     const { data: currentFile } = await octokit.rest.repos.getContent({
         owner: github_1.context.repo.owner,
@@ -154,7 +154,6 @@ async function run() {
             console.log(); // Empty space
         }
         else {
-            console.log("packageJsonPath", packageJsonPath);
             const packageJson = JSON.parse(await fs_1.default.promises.readFile(packageJsonPath, "utf-8"));
             packageJson.version = newVersion;
             await fs_1.default.promises.writeFile(packageJsonPath, JSON.stringify(packageJson, null, 2));

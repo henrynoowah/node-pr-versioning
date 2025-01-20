@@ -93,9 +93,11 @@ async function run() {
 
   const customPath = getInput("path");
 
-  const packageJsonPath = customPath
-    ? customPath.replace(/\/\*\*/g, "") + "/package.json"
-    : "/package.json";
+  const packageJsonPath = (
+    customPath
+      ? customPath.replace(/\/\*\*/g, "") + "/package.json"
+      : "/package.json"
+  ).replace(/\.\//g, "");
 
   console.log(packageJsonPath);
 
@@ -174,8 +176,6 @@ async function run() {
       console.log(`skipping version bump commit`);
       console.log(); // Empty space
     } else {
-      console.log("packageJsonPath", packageJsonPath);
-
       const packageJson = JSON.parse(
         await fs.promises.readFile(packageJsonPath, "utf-8")
       );

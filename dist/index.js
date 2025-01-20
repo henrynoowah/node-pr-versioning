@@ -55,7 +55,6 @@ async function run() {
     else {
         pullRequest = github_1.context.payload.pull_request;
     }
-    console.log("pullRequest", pullRequest);
     if (!pullRequest)
         return (0, core_1.setFailed)("This action should only be run on a push event or a pull request");
     // #region get check & get pr information
@@ -93,6 +92,7 @@ async function run() {
     const packageJsonPath = customPath
         ? customPath.replace(/\/\*\*/g, "") + "/package.json"
         : "/package.json";
+    console.log(packageJsonPath);
     const { data: currentFile } = await octokit.rest.repos.getContent({
         owner: github_1.context.repo.owner,
         repo: github_1.context.repo.repo,
@@ -168,7 +168,7 @@ async function run() {
                 sha: currentFile.sha, // Use the current file's SHA
             });
         }
-        if (createTag) {
+        if (createTag && !dry_run) {
             const tagName = !!skipCommit ? version : newVersion;
             console.log(`Creating Tag: ${tagName}`);
             console.log(); // Empty space

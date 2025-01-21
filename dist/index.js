@@ -91,9 +91,7 @@ async function run() {
     // const dryRun = dryRunInput === "true" ? true : Boolean(dryRunInput);
     const dryRun = Boolean((0, core_1.getInput)("dry-run") === "true");
     const customPath = (0, core_1.getInput)("path");
-    const path = customPath
-        ? customPath.replace(/\/\*\*/g, "") + "/package.json"
-        : "package.json";
+    const path = customPath ? customPath.replace(/\/\*\*/g, "") + "/package.json" : "package.json";
     console.group("\n🔧 Inputs:");
     console.log("- skip-commit:", skipCommit);
     console.log("- create-tag:", createTag);
@@ -130,25 +128,16 @@ async function run() {
         }
         else if (isMinor) {
             console.log("🚀 Minor label found");
-            newVersion =
-                version.split(".")[0] +
-                    "." +
-                    (Number(version.split(".")[1]) + 1) +
-                    ".0";
+            newVersion = version.split(".")[0] + "." + (Number(version.split(".")[1]) + 1) + ".0";
         }
         else if (isPatch) {
             console.log("🔧 Patch label found");
-            newVersion =
-                version.split(".")[0] +
-                    "." +
-                    version.split(".")[1] +
-                    "." +
-                    (Number(version.split(".")[2]) + 1);
+            newVersion = version.split(".")[0] + "." + version.split(".")[1] + "." + (Number(version.split(".")[2]) + 1);
         }
         if (newVersion === version)
             return console.log("No version change detected");
         (0, core_1.setOutput)("new-version", newVersion);
-        (0, core_1.setOutput)("pull-request-number", pullRequest.number);
+        (0, core_1.setOutput)("pr-number", pullRequest.number);
         console.log(`- Expected version bump: ${version} -> ${newVersion}`);
         if (!!dryRun) {
             console.log("\nDry run mode enabled. Skipping actual changes.");
@@ -182,8 +171,8 @@ async function run() {
         }
         if (createTag) {
             console.log(); // Empty space
-            const tagPrefix = (0, core_1.getInput)("tag-prefix");
-            const tagName = `${tagPrefix.replace("{{version}}", !skipCommit ? newVersion : version)}`;
+            const tagNameInput = (0, core_1.getInput)("tag-name");
+            const tagName = `${tagNameInput.replace("{{version}}", !skipCommit ? newVersion : version)}`;
             console.log("- tag-name", tagName);
             console.log(`\nCreating Tag: ${tagName}`);
             // Create a reference to the new tag

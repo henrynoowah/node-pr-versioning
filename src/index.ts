@@ -47,10 +47,7 @@ async function run() {
     pullRequest = context.payload.pull_request;
   }
 
-  if (!pullRequest)
-    return setFailed(
-      "This action should only be run on a push event or a pull request"
-    );
+  if (!pullRequest) return setFailed("This action should only be run on a push event or a pull request");
   // #region get check & get pr information
 
   // #region Pull Request task
@@ -93,9 +90,7 @@ async function run() {
   const dryRun: boolean = Boolean(getInput("dry-run") === "true");
 
   const customPath = getInput("path");
-  const path = customPath
-    ? customPath.replace(/\/\*\*/g, "") + "/package.json"
-    : "package.json";
+  const path = customPath ? customPath.replace(/\/\*\*/g, "") + "/package.json" : "package.json";
 
   console.group("\n🔧 Inputs:");
   console.log("- skip-commit:", skipCommit);
@@ -111,10 +106,7 @@ async function run() {
     ref: pullRequest.head.ref,
   });
 
-  const packageJson = Buffer.from(
-    (currentFile as any).content,
-    "base64"
-  ).toString("utf-8");
+  const packageJson = Buffer.from((currentFile as any).content, "base64").toString("utf-8");
   const version = JSON.parse(packageJson).version;
 
   try {
@@ -142,26 +134,16 @@ async function run() {
       newVersion = Number(version.split(".")[0]) + 1 + ".0.0";
     } else if (isMinor) {
       console.log("🚀 Minor label found");
-      newVersion =
-        version.split(".")[0] +
-        "." +
-        (Number(version.split(".")[1]) + 1) +
-        ".0";
+      newVersion = version.split(".")[0] + "." + (Number(version.split(".")[1]) + 1) + ".0";
     } else if (isPatch) {
       console.log("🔧 Patch label found");
-      newVersion =
-        version.split(".")[0] +
-        "." +
-        version.split(".")[1] +
-        "." +
-        (Number(version.split(".")[2]) + 1);
+      newVersion = version.split(".")[0] + "." + version.split(".")[1] + "." + (Number(version.split(".")[2]) + 1);
     }
 
-    if (newVersion === version)
-      return console.log("No version change detected");
+    if (newVersion === version) return console.log("No version change detected");
 
     setOutput("new-version", newVersion);
-    setOutput("pull-request-number", pullRequest.number);
+    setOutput("pr-number", pullRequest.number);
 
     console.log(`- Expected version bump: ${version} -> ${newVersion}`);
 
@@ -191,9 +173,7 @@ async function run() {
         repo: context.repo.repo,
         path,
         message: `commit version update: ${version} -> ${newVersion}`,
-        content: Buffer.from(JSON.stringify(packageJson, null, 2)).toString(
-          "base64"
-        ),
+        content: Buffer.from(JSON.stringify(packageJson, null, 2)).toString("base64"),
         branch: pullRequest.base.ref,
         sha: (currentFile as any).sha, // Use the current file's SHA
       });
@@ -201,11 +181,8 @@ async function run() {
     if (createTag) {
       console.log(); // Empty space
 
-      const tagPrefix = getInput("tag-prefix");
-      const tagName = `${tagPrefix.replace(
-        "{{version}}",
-        !skipCommit ? newVersion : version
-      )}`;
+      const tagNameInput = getInput("tag-name");
+      const tagName = `${tagNameInput.replace("{{version}}", !skipCommit ? newVersion : version)}`;
       console.log("- tag-name", tagName);
       console.log(`\nCreating Tag: ${tagName}`);
 

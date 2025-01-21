@@ -32,8 +32,8 @@ inputs:
     description: "Create a tag using new version"
     required: false
     default: false
-  tag-prefix:
-    description: "Tag prefix"
+  tag-name:
+    description: "Tag name"
     required: false
     default: "v{{version}}"
   pr-number:

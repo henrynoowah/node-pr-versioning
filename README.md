@@ -1,4 +1,4 @@
-# GitHub Action: Versioning
+# GitHub Action: Node PR Versioning
 
 This GitHub Action automates the versioning process for pull requests in a repository. It checks for specific labels on the pull request to determine whether to increment the version as major, minor, or patch. If a version change is necessary, it updates the `package.json` file in the repository with the new version.
 
@@ -19,17 +19,25 @@ This GitHub Action automates the versioning process for pull requests in a repos
 
 ## Inputs
 
-| Input          | Required | Default Value  | Description                                                              |
-| -------------- | -------- | -------------- | ------------------------------------------------------------------------ |
-| `github-token` | Yes      | N/A            | The GitHub token for authentication.                                     |
-| `pr-number`    | No       | N/A            | The pull request number to check.                                        |
-| `labels-minor` | No       | N/A            | A comma-separated list of labels that trigger a minor version increment. |
-| `labels-major` | No       | N/A            | A comma-separated list of labels that trigger a major version increment. |
-| `labels-patch` | No       | N/A            | A comma-separated list of labels that trigger a patch version increment. |
-| `skip-commit`  | No       | false          | If set to true, the action will skip committing changes.                 |
-| `create-tag`   | No       | false          | If set to true, the action will create a tag for the new version.        |
-| `path`         | No       | `package.json` | The path to the `package.json` file (default is `package.json`).         |
-| `dry-run`      | No       | false          | If set to true, the action will not commit changes.                      |
+| Input          | Required | Default Value  | Description                                                                    |
+| -------------- | -------- | -------------- | ------------------------------------------------------------------------------ |
+| `github-token` | ✅       | N/A            | The GitHub token for authentication.                                           |
+| `labels-minor` | ✅       | N/A            | A comma-separated list of labels that trigger a minor version increment.       |
+| `labels-major` | ✅       | N/A            | A comma-separated list of labels that trigger a major version increment.       |
+| `labels-patch` | ✅       | N/A            | A comma-separated list of labels that trigger a patch version increment.       |
+| `pr-number`    | ❌       | N/A            | The pull request number to check (optional: when using push event).            |
+| `skip-commit`  | ❌       | false          | If set to true, the action will skip committing changes.                       |
+| `create-tag`   | ❌       | false          | If set to true, the action will create a tag for the new version.              |
+| `tag-name`     | ❌       | `v{{version}}` | The name for the tag. `{{version}}` is the new version returned by the action. |
+| `path`         | ❌       | `package.json` | The path to the `package.json` file (default is `package.json`).               |
+| `dry-run`      | ❌       | false          | If set to true, the action will not commit changes.                            |
+
+## Outputs
+
+| Output        | Description                                     |
+| ------------- | ----------------------------------------------- |
+| `new-version` | The new version returned by the action.         |
+| `pr-number`   | The number of pull request used for the action. |
 
 ## Example Usage
 
@@ -108,7 +116,7 @@ jobs:
           labels-major: "major"
           labels-patch: "chore, bug"
           create-tag: true
-          tag-prefix: "v{{version}}"
+          tag-name: "v{{version}}"
 ```
 
 ---
@@ -120,7 +128,7 @@ Example usage in a monorepo setup:
 - Because monorepo has multiple `package.json` files and if you are to manage each project version, you need to specify the path to the `package.json` file to be updated.
 - Filter the paths to be updated by using `paths-filter` action like `dorny/paths-filter` together.
 - Then use the `noowah/pr-versioning` action to update the version.
-- By using tag-prefix, you can specify the tag prefix for each project.
+- By using tag-name, you can specify the tag name for each project.
 
 ```yaml
 name: "Test Monorepo"
@@ -140,9 +148,9 @@ jobs:
         id: filter
         with:
           filters: |
-            test_monorepo:
+            admin:
               - 'apps/admin/**'
-            main:
+            client:
               - 'apps/client/**'
 
       - name: "Update admin version"
@@ -156,7 +164,7 @@ jobs:
           create-tag: true
           skip-commit: true
           path: "apps/admin/**"
-          tag-prefix: "@repo/admin@v{{version}}"
+          tag-name: "@repo/admin@v{{version}}"
           dry-run: true
 
       - name: "Update client version"
@@ -169,6 +177,6 @@ jobs:
           labels-patch: "chore, bug"
           create-tag: true
           skip-commit: true
-          tag-prefix: "@repo/client@v{{version}}"
+          tag-name: "@repo/client@v{{version}}"
           dry-run: true
 ```

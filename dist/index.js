@@ -68,7 +68,8 @@ async function run() {
     const patchLabels = (0, core_1.getInput)("labels-patch")
         .split(",")
         .map((label) => label.trim());
-    const dryRun = (0, core_1.getInput)("dry-run");
+    const dryRunInput = (0, core_1.getInput)("dry-run");
+    const dryRun = dryRunInput === "true" ? true : Boolean(dryRunInput);
     console.group("🎉 Major Labels:");
     majorLabels.forEach((label) => console.log(`- ${label}`));
     console.groupEnd();
@@ -86,9 +87,9 @@ async function run() {
     const createTagInput = (0, core_1.getInput)("create-tag");
     const createTag = createTagInput === "false" ? true : Boolean(createTagInput);
     const customPath = (0, core_1.getInput)("path");
-    const path = (customPath
+    const path = customPath
         ? customPath.replace(/\/\*\*/g, "") + "/package.json"
-        : "/package.json").replace(/\.\//g, "");
+        : "/package.json";
     console.group("\n🔧 Inputs:");
     console.log("- skip-commit:", skipCommit);
     console.log("- create-tag:", createTag);
@@ -158,7 +159,14 @@ async function run() {
             console.log(); // Empty space
         }
         else {
-            const packageJson = JSON.parse(await fs_1.default.promises.readFile(path, "utf-8"));
+            let packageJson;
+            try {
+                packageJson = JSON.parse(await fs_1.default.promises.readFile(path, "utf-8"));
+            }
+            catch (error) {
+                return (0, core_1.setFailed)(`Failed to read package.json at path: ${path}`);
+            }
+            console.log("project found:", packageJson.name);
             packageJson.version = newVersion;
             await fs_1.default.promises.writeFile(path, JSON.stringify(packageJson, null, 2));
             await octokit.rest.repos.createOrUpdateFileContents({

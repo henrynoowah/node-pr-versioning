@@ -1,0 +1,46 @@
+name: "Run on pull request merged"
+
+on:
+  pull_request:
+    branches: [main, dev]
+    types: [opened, reopened, synchronize]
+
+jobs:
+  update-version:
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: "actions/checkout@v4"
+      - name: "Filter paths"
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            test-monorepo:
+              - 'src/**'
+            main:
+              - '**'
+
+      - name: "Update test-monorepo version"
+        if: steps.filter.outputs.test-monorepo == 'true'
+        uses: ./
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          labels-minor: "enhancement"
+          labels-major: "major"
+          labels-patch: "chore, bug"
+          create-tag: true
+          skip-commit: true
+          path: "src/**"
+          tag-prefix: "@repo/test-monorepo@v{{version}}"
+
+      - name: "Update main version"
+        if: steps.filter.outputs.main == 'true'
+        uses: ./
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          labels-minor: "enhancement"
+          labels-major: "major"
+          labels-patch: "chore, bug"
+          create-tag: true
+          skip-commit: true
+          tag-prefix: "@repo/root@v{{version}}"

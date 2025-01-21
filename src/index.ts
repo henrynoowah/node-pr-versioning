@@ -64,7 +64,8 @@ async function run() {
     .split(",")
     .map((label) => label.trim());
 
-  const dryRun = getInput("dry-run");
+  const dryRunInput = getInput("dry-run");
+  const dryRun = dryRunInput === "true" ? true : Boolean(dryRunInput);
 
   console.group("🎉 Major Labels:");
   majorLabels.forEach((label) => console.log(`- ${label}`));
@@ -89,11 +90,9 @@ async function run() {
   const createTag = createTagInput === "false" ? true : Boolean(createTagInput);
   const customPath = getInput("path");
 
-  const path = (
-    customPath
-      ? customPath.replace(/\/\*\*/g, "") + "/package.json"
-      : "/package.json"
-  ).replace(/\.\//g, "");
+  const path = customPath
+    ? customPath.replace(/\/\*\*/g, "") + "/package.json"
+    : "/package.json";
 
   console.group("\n🔧 Inputs:");
   console.log("- skip-commit:", skipCommit);
@@ -178,7 +177,13 @@ async function run() {
       console.log(`skipping version bump commit`);
       console.log(); // Empty space
     } else {
-      const packageJson = JSON.parse(await fs.promises.readFile(path, "utf-8"));
+      let packageJson;
+      try {
+        packageJson = JSON.parse(await fs.promises.readFile(path, "utf-8"));
+      } catch (error) {
+        return setFailed(`Failed to read package.json at path: ${path}`);
+      }
+      console.log("project found:", packageJson.name);
 
       packageJson.version = newVersion;
       await fs.promises.writeFile(path, JSON.stringify(packageJson, null, 2));

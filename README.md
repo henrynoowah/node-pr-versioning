@@ -14,6 +14,8 @@ This GitHub Action automates the versioning process for pull requests in a repos
 5. **Version Update**: If a version change is detected, it updates the `package.json` file with the new version.
 6. **Commit Changes**: The action commits the changes back to the repository if the `skip-commit` input is not set to true.
 7. **Tag Creation**: Optionally, it can create a tag for the new version based on the `create-tag` input.
+8. **Path**: Optionally, it can specify the path to the `package.json` file to be updated.
+9. **Dry Run**: Optionally, it can run in dry run mode to check if the version will be updated without actually committing the changes.
 
 ## Inputs
 
@@ -44,7 +46,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - uses: "actions/checkout@v4"
-      - uses: ./
+      - uses: "noowah/pr-versioning@v1.2.0"
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           labels-minor: "enhancement"
@@ -67,7 +69,7 @@ jobs:
     if: github.event.pull_request.merged == true
     steps:
       - uses: "actions/checkout@v4"
-      - uses: ./
+      - uses: "noowah/pr-versioning@v1.2.0"
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           labels-minor: "enhancement"
@@ -76,6 +78,9 @@ jobs:
 ```
 
 ### Creating a tag on push
+
+- Because the `push` event does not have a pull request number, this action is not ideal to be use on push event as pull request number is required.
+- However, we can get the PR number from the commit message. by using `git log -1 --pretty=%B` to get the commit message and then use `grep -oP '#\K[0-9]+'` to get the PR number.
 
 ```yaml
 name: "Run on pull request merged"
@@ -95,7 +100,7 @@ jobs:
           PR_NUMBER=$(git log -1 --pretty=%B | grep -oP '#\K[0-9]+' || echo '')
           echo "PR_NUMBER=$PR_NUMBER"
           echo "number=$PR_NUMBER" >> $GITHUB_OUTPUT
-      - uses: ./
+      - uses: "noowah/pr-versioning@v1.2.0"
         if: ${{ steps.pr.outputs.number != '' }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -110,8 +115,56 @@ jobs:
 
 ## Monorepo
 
--
+Example usage in a monorepo setup:
+
+- Because monorepo has multiple `package.json` files and if you are to manage each project version, you need to specify the path to the `package.json` file to be updated.
+- Filter the paths to be updated by using `paths-filter` action like `dorny/paths-filter` together.
+- Then use the `noowah/pr-versioning` action to update the version.
+- By using tag-prefix, you can specify the tag prefix for each project.
 
 ```yaml
-name: "Versioning"
+name: "Run on pull request merged"
+
+on:
+  push:
+    branches: [main, dev]
+
+jobs:
+  update-version:
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: "actions/checkout@v4"
+      - name: "Filter paths"
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            admin:
+              - 'apps/admin/**'
+            client:
+              - 'apps/client/**'
+
+      - name: "Update admin version"
+        if: steps.filter.outputs.admin == 'true'
+        uses: "noowah/pr-versioning@v1.2.0"
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          labels-minor: "enhancement"
+          labels-major: "major"
+          labels-patch: "chore, bug"
+          create-tag: true
+          path: "apps/admin/**"
+          tag-prefix: "@repo/admin@v{{version}}"
+
+      - name: "Update client version"
+        if: steps.filter.outputs.client == 'true'
+        uses: "noowah/pr-versioning@v1.2.0"
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          labels-minor: "enhancement"
+          labels-major: "major"
+          labels-patch: "chore, bug"
+          create-tag: true
+          path: "apps/client/**"
+          tag-prefix: "@repo/client@v{{version}}"
 ```

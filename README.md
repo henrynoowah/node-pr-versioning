@@ -27,5 +27,91 @@ This GitHub Action automates the versioning process for pull requests in a repos
 | `skip-commit`  | No       | false          | If set to true, the action will skip committing changes.                 |
 | `create-tag`   | No       | false          | If set to true, the action will create a tag for the new version.        |
 | `path`         | No       | `package.json` | The path to the `package.json` file (default is `package.json`).         |
+| `dry-run`      | No       | false          | If set to true, the action will not commit changes.                      |
 
 ## Example Usage
+
+### Basics
+
+```yaml
+name: "Run on pull request merged"
+
+on:
+  pull_request:
+
+jobs:
+  update-version:
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: "actions/checkout@v4"
+      - uses: ./
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          labels-minor: "enhancement"
+          labels-major: "major"
+          labels-patch: "chore, bug"
+```
+
+### Commit bumped version on pull request merged
+
+```yaml
+name: "Run on pull request merged"
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  update-version:
+    runs-on: "ubuntu-latest"
+    if: github.event.pull_request.merged == true
+    steps:
+      - uses: "actions/checkout@v4"
+      - uses: ./
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          labels-minor: "enhancement"
+          labels-major: "major"
+          labels-patch: "chore, bug"
+```
+
+### Creating a tag on push
+
+```yaml
+name: "Run on pull request merged"
+
+on:
+  push:
+    branches: [main, dev]
+
+jobs:
+  update-version:
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: "actions/checkout@v4"
+      - name: "Get PR number"
+        id: pr
+        run: |
+          PR_NUMBER=$(git log -1 --pretty=%B | grep -oP '#\K[0-9]+' || echo '')
+          echo "PR_NUMBER=$PR_NUMBER"
+          echo "number=$PR_NUMBER" >> $GITHUB_OUTPUT
+      - uses: ./
+        if: ${{ steps.pr.outputs.number != '' }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          labels-minor: "enhancement"
+          labels-major: "major"
+          labels-patch: "chore, bug"
+          create-tag: true
+          tag-prefix: "v{{version}}"
+```
+
+---
+
+## Monorepo
+
+-
+
+```yaml
+name: "Versioning"
+```

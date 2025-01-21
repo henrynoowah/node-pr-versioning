@@ -64,7 +64,7 @@ async function run() {
     .split(",")
     .map((label) => label.trim());
 
-  const dry_run = getInput("dry-run");
+  const dryRun = getInput("dry-run");
 
   console.group("🎉 Major Labels:");
   majorLabels.forEach((label) => console.log(`- ${label}`));
@@ -87,10 +87,6 @@ async function run() {
 
   const createTagInput = getInput("create-tag");
   const createTag = createTagInput === "false" ? true : Boolean(createTagInput);
-
-  console.log("skipCommit", skipCommit);
-  console.log("createTag", createTag);
-
   const customPath = getInput("path");
 
   const path = (
@@ -99,7 +95,12 @@ async function run() {
       : "/package.json"
   ).replace(/\.\//g, "");
 
-  console.log("\npath to package.json file:", path);
+  console.group("\n🔧 Inputs:");
+  console.log("- skip-commit:", skipCommit);
+  console.log("- create-tag:", createTag);
+  console.log("- dry-run:", dryRun);
+  console.log("- package.json path:", path);
+  console.groupEnd();
 
   const { data: currentFile } = await octokit.rest.repos.getContent({
     owner: context.repo.owner,
@@ -123,7 +124,7 @@ async function run() {
     });
 
     const existingLabels = pullRequestData.labels.map((label) => label.name);
-    console.group("Existing labels:");
+    console.group("\nExisting labels:");
     existingLabels.forEach((label) => console.log(`- ${label}`));
     console.groupEnd();
     console.log(); // Empty space
@@ -167,7 +168,7 @@ async function run() {
 
     console.log("tag-name", tagName);
 
-    if (dry_run) {
+    if (dryRun) {
       console.log("Dry run mode enabled. Skipping actual changes.");
       return;
     }

@@ -2,6 +2,10 @@ name: "Node PR Versioning"
 description: "Upate node project version using githubs pull request labels"
 author: "noowah"
 
+branding:
+  icon: "git-pull-request"
+  color: "green"
+
 inputs:
   github-token:
     description: "The GitHub token for authentication"

@@ -1,4 +1,4 @@
-name: "Run on pull request merged"
+name: "Test Monorepo"
 
 on:
   pull_request:
@@ -15,13 +15,13 @@ jobs:
         id: filter
         with:
           filters: |
-            test-monorepo:
+            test_monorepo:
               - 'src/**'
             main:
               - '**'
 
       - name: "Update test-monorepo version"
-        if: steps.filter.outputs.test-monorepo == 'true'
+        if: steps.filter.outputs.test_monorepo == 'true'
         uses: ./
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}

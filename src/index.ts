@@ -64,9 +64,6 @@ async function run() {
     .split(",")
     .map((label) => label.trim());
 
-  const dryRunInput = getInput("dry-run");
-  const dryRun = dryRunInput === "true" ? true : Boolean(dryRunInput);
-
   console.group("🎉 Major Labels:");
   majorLabels.forEach((label) => console.log(`- ${label}`));
   console.groupEnd();
@@ -82,17 +79,23 @@ async function run() {
   console.groupEnd();
   console.log(); // Empty space
 
-  const skipCommitInput = getInput("skip-commit");
-  const skipCommit =
-    skipCommitInput === "true" ? true : Boolean(skipCommitInput);
+  // const skipCommitInput = getInput("skip-commit");
+  // const skipCommit =
+  //   skipCommitInput === "true" ? true : Boolean(skipCommitInput);
+  const skipCommit: boolean = Boolean(getInput("skip-commit") === "true");
 
-  const createTagInput = getInput("create-tag");
-  const createTag = createTagInput === "false" ? true : Boolean(createTagInput);
+  // const createTagInput = getInput("create-tag");
+  // const createTag = createTagInput === "false" ? true : Boolean(createTagInput);
+  const createTag: boolean = Boolean(getInput("create-tag") === "true");
+
+  // const dryRunInput = getInput("dry-run");
+  // const dryRun = dryRunInput === "true" ? true : Boolean(dryRunInput);
+  const dryRun: boolean = Boolean(getInput("dry-run") === "true");
+
   const customPath = getInput("path");
-
   const path = customPath
     ? customPath.replace(/\/\*\*/g, "") + "/package.json"
-    : "/package.json";
+    : "package.json";
 
   console.group("\n🔧 Inputs:");
   console.log("- skip-commit:", skipCommit);
@@ -123,7 +126,7 @@ async function run() {
     });
 
     const existingLabels = pullRequestData.labels.map((label) => label.name);
-    console.group("\nExisting labels:");
+    console.group("\nLabels detected:");
     existingLabels.forEach((label) => console.log(`- ${label}`));
     console.groupEnd();
     console.log(); // Empty space
@@ -157,18 +160,13 @@ async function run() {
     if (newVersion === version)
       return console.log("No version change detected");
 
-    console.log(`Expected version bump: ${version} -> ${newVersion}`);
-
     setOutput("new-version", newVersion);
     setOutput("pull-request-number", pullRequest.number);
 
-    const tagPrefix = getInput("tag-prefix");
-    const tagName = `${tagPrefix.replace("{{version}}", newVersion)}`;
+    console.log(`- Expected version bump: ${version} -> ${newVersion}`);
 
-    console.log("tag-name", tagName);
-
-    if (dryRun) {
-      console.log("Dry run mode enabled. Skipping actual changes.");
+    if (!!dryRun) {
+      console.log("\nDry run mode enabled. Skipping actual changes.");
       return;
     }
 
@@ -201,8 +199,15 @@ async function run() {
       });
     }
     if (createTag) {
-      console.log(`\nCreating Tag: ${tagName}`);
       console.log(); // Empty space
+
+      const tagPrefix = getInput("tag-prefix");
+      const tagName = `${tagPrefix.replace(
+        "{{version}}",
+        !skipCommit ? newVersion : version
+      )}`;
+      console.log("- tag-name", tagName);
+      console.log(`\nCreating Tag: ${tagName}`);
 
       // Create a reference to the new tag
       await octokit.rest.git.createRef({

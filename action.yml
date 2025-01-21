@@ -16,16 +16,30 @@ inputs:
     description: "The label to update Patch version"
     required: true
   skip-commit:
+    type: boolean
     description: "Skip commit the changes to the repository"
     required: false
+    default: false
   path:
     description: "The path to the package.json file"
     required: false
-    default: "package.json"
   create-tag:
+    type: boolean
     description: "Create a tag using new version"
     required: false
-    default: "true"
+    default: false
+  tag-prefix:
+    description: "Tag prefix"
+    required: false
+    default: "v{{version}}"
+  pr-number:
+    description: "The pull request number"
+    required: false
+  dry-run:
+    type: boolean
+    description: "Dry run the action"
+    required: false
+    default: false
 
 runs:
   using: "node16"

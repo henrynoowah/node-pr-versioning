@@ -1,5 +1,5 @@
-name: "PR Versioning"
-description: "Upate version using PR labels"
+name: "Node PR Versioning"
+description: "Upate node project version using githubs pull request labels"
 author: "noowah"
 
 inputs:

@@ -137,16 +137,14 @@ async function run() {
     if (isMajor) {
       console.log("🎉 Major label found");
       newVersion = Number(version.split(".")[0]) + 1 + ".0.0";
-    }
-    if (isMinor) {
+    } else if (isMinor) {
       console.log("🚀 Minor label found");
       newVersion =
         version.split(".")[0] +
         "." +
         (Number(version.split(".")[1]) + 1) +
         ".0";
-    }
-    if (isPatch) {
+    } else if (isPatch) {
       console.log("🔧 Patch label found");
       newVersion =
         version.split(".")[0] +

@@ -32,6 +32,7 @@ jobs:
           skip-commit: true
           path: "src/**"
           tag-prefix: "@repo/test-monorepo@v{{version}}"
+          dry-run: true
 
       - name: "Update main version"
         if: steps.filter.outputs.main == 'true'
@@ -44,3 +45,4 @@ jobs:
           create-tag: true
           skip-commit: true
           tag-prefix: "@repo/root@v{{version}}"
+          dry-run: true

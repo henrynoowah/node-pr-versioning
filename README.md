@@ -87,7 +87,7 @@ name: "Run on pull request merged"
 
 on:
   push:
-    branches: [main, dev]
+    branches: [dev]
 
 jobs:
   update-version:
@@ -123,11 +123,12 @@ Example usage in a monorepo setup:
 - By using tag-prefix, you can specify the tag prefix for each project.
 
 ```yaml
-name: "Run on pull request merged"
+name: "Test Monorepo"
 
 on:
-  push:
+  pull_request:
     branches: [main, dev]
+    types: [opened, reopened, synchronize]
 
 jobs:
   update-version:
@@ -139,32 +140,35 @@ jobs:
         id: filter
         with:
           filters: |
-            admin:
+            test_monorepo:
               - 'apps/admin/**'
-            client:
+            main:
               - 'apps/client/**'
 
       - name: "Update admin version"
         if: steps.filter.outputs.admin == 'true'
-        uses: "noowah/pr-versioning@v1.2.0"
+        uses: ./
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           labels-minor: "enhancement"
           labels-major: "major"
           labels-patch: "chore, bug"
           create-tag: true
+          skip-commit: true
           path: "apps/admin/**"
           tag-prefix: "@repo/admin@v{{version}}"
+          dry-run: true
 
       - name: "Update client version"
         if: steps.filter.outputs.client == 'true'
-        uses: "noowah/pr-versioning@v1.2.0"
+        uses: ./
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           labels-minor: "enhancement"
           labels-major: "major"
           labels-patch: "chore, bug"
           create-tag: true
-          path: "apps/client/**"
+          skip-commit: true
           tag-prefix: "@repo/client@v{{version}}"
+          dry-run: true
 ```

@@ -1,4 +1,4 @@
-name: "Versioning"
+name: "Test Push"
 
 on:
   push:
@@ -23,4 +23,5 @@ jobs:
           labels-major: "major"
           labels-patch: "chore, bug"
           create-tag: true
+          dry-run: true
           pr-number: ${{ steps.pr.outputs.number }}

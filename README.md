@@ -46,7 +46,7 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - uses: "actions/checkout@v4"
-      - uses: "noowah/pr-versioning@v1.2.0"
+      - uses: "henrynoowah/node-pr-versioning@v1.0.0"
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           labels-minor: "enhancement"
@@ -69,7 +69,7 @@ jobs:
     if: github.event.pull_request.merged == true
     steps:
       - uses: "actions/checkout@v4"
-      - uses: "noowah/pr-versioning@v1.2.0"
+      - uses: "henrynoowah/node-pr-versioning@v1.0.0"
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           labels-minor: "enhancement"
@@ -100,7 +100,7 @@ jobs:
           PR_NUMBER=$(git log -1 --pretty=%B | grep -oP '#\K[0-9]+' || echo '')
           echo "PR_NUMBER=$PR_NUMBER"
           echo "number=$PR_NUMBER" >> $GITHUB_OUTPUT
-      - uses: "noowah/pr-versioning@v1.2.0"
+      - uses: "henrynoowah/node-pr-versioning@v1.0.0"
         if: ${{ steps.pr.outputs.number != '' }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}

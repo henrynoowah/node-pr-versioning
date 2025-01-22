@@ -92,8 +92,10 @@ async function run() {
     const dryRun = Boolean((0, core_1.getInput)("dry-run") === "true");
     const customPath = (0, core_1.getInput)("path");
     const path = customPath ? customPath.replace(/\/\*\*/g, "") + "/package.json" : "package.json";
+    const commitMessage = (0, core_1.getInput)("commit-message");
     console.group("\n🔧 Inputs:");
     console.log("- skip-commit:", skipCommit);
+    console.log("- commit-message:", commitMessage);
     console.log("- create-tag:", createTag);
     console.log("- dry-run:", dryRun);
     console.log("- package.json path:", path);
@@ -157,13 +159,14 @@ async function run() {
                 return (0, core_1.setFailed)(`Failed to read package.json at path: ${path}`);
             }
             console.log("project found:", packageJson.name);
+            const message = commitMessage.replace("{{version}}", version).replace("{{new-version}}", newVersion);
             packageJson.version = newVersion;
             await fs_1.default.promises.writeFile(path, JSON.stringify(packageJson, null, 2));
             await octokit.rest.repos.createOrUpdateFileContents({
                 owner: github_1.context.repo.owner,
                 repo: github_1.context.repo.repo,
                 path,
-                message: `commit version update: ${version} -> ${newVersion}`,
+                message,
                 content: Buffer.from(JSON.stringify(packageJson, null, 2)).toString("base64"),
                 branch: pullRequest.base.ref,
                 sha: currentFile.sha, // Use the current file's SHA
@@ -172,7 +175,7 @@ async function run() {
         if (createTag) {
             console.log(); // Empty space
             const tagNameInput = (0, core_1.getInput)("tag-name");
-            const tagName = `${tagNameInput.replace("{{version}}", !skipCommit ? newVersion : version)}`;
+            const tagName = `${tagNameInput.replace("{{new-version}}", newVersion)}`;
             console.log("- tag-name", tagName);
             console.log(`\nCreating Tag: ${tagName}`);
             // Create a reference to the new tag

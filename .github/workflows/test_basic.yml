@@ -19,4 +19,4 @@ jobs:
           dry-run: true
           create-tag: true
           path: "src/**"
-          tag-name: "@repo/admin@v{{version}}"
+          tag-name: "@v{{new-version}}"

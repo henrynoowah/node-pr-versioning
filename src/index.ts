@@ -92,8 +92,11 @@ async function run() {
   const customPath = getInput("path");
   const path = customPath ? customPath.replace(/\/\*\*/g, "") + "/package.json" : "package.json";
 
+  const commitMessage = getInput("commit-message");
+
   console.group("\n🔧 Inputs:");
   console.log("- skip-commit:", skipCommit);
+  console.log("- commit-message:", commitMessage);
   console.log("- create-tag:", createTag);
   console.log("- dry-run:", dryRun);
   console.log("- package.json path:", path);
@@ -165,6 +168,8 @@ async function run() {
       }
       console.log("project found:", packageJson.name);
 
+      const message = commitMessage.replace("{{version}}", version).replace("{{new-version}}", newVersion);
+
       packageJson.version = newVersion;
       await fs.promises.writeFile(path, JSON.stringify(packageJson, null, 2));
 
@@ -172,7 +177,7 @@ async function run() {
         owner: context.repo.owner,
         repo: context.repo.repo,
         path,
-        message: `commit version update: ${version} -> ${newVersion}`,
+        message,
         content: Buffer.from(JSON.stringify(packageJson, null, 2)).toString("base64"),
         branch: pullRequest.base.ref,
         sha: (currentFile as any).sha, // Use the current file's SHA
@@ -182,7 +187,7 @@ async function run() {
       console.log(); // Empty space
 
       const tagNameInput = getInput("tag-name");
-      const tagName = `${tagNameInput.replace("{{version}}", !skipCommit ? newVersion : version)}`;
+      const tagName = `${tagNameInput.replace("{{new-version}}", newVersion)}`;
       console.log("- tag-name", tagName);
       console.log(`\nCreating Tag: ${tagName}`);
 

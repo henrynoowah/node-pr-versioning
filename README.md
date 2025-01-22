@@ -2,9 +2,11 @@
 
 This GitHub Action automates the versioning process for pull requests in a repository. It checks for specific labels on the pull request to determine whether to increment the version as major, minor, or patch. If a version change is necessary, it updates the `package.json` file in the repository with the new version.
 
+The action will make a commit to the
+
 ## How It Works
 
-1. **Token Retrieval**: The action retrieves the GitHub token from the action inputs.
+1. **Token Retrieval**: The action retrieves the GitHub token from the action inputs. Use `PAT` if you are committing to a protected branch.
 2. **Pull Request Check**: It checks if the action is triggered by a pull request.
 3. **Label Fetching**: The action fetches existing labels from the pull request.
 4. **Version Increment Logic**: Based on the labels, it determines the type of version increment:
@@ -19,18 +21,19 @@ This GitHub Action automates the versioning process for pull requests in a repos
 
 ## Inputs
 
-| Input          | Required | Default Value  | Description                                                                    |
-| -------------- | -------- | -------------- | ------------------------------------------------------------------------------ |
-| `github-token` | ✅       | N/A            | The GitHub token for authentication.                                           |
-| `labels-minor` | ✅       | N/A            | A comma-separated list of labels that trigger a minor version increment.       |
-| `labels-major` | ✅       | N/A            | A comma-separated list of labels that trigger a major version increment.       |
-| `labels-patch` | ✅       | N/A            | A comma-separated list of labels that trigger a patch version increment.       |
-| `pr-number`    | ❌       | N/A            | The pull request number to check (optional: when using push event).            |
-| `skip-commit`  | ❌       | false          | If set to true, the action will skip committing changes.                       |
-| `create-tag`   | ❌       | false          | If set to true, the action will create a tag for the new version.              |
-| `tag-name`     | ❌       | `v{{version}}` | The name for the tag. `{{version}}` is the new version returned by the action. |
-| `path`         | ❌       | `package.json` | The path to the `package.json` file (default is `package.json`).               |
-| `dry-run`      | ❌       | false          | If set to true, the action will not commit changes.                            |
+| Input            | Required | Default Value                                        | Description                                                                                        |
+| ---------------- | -------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `github-token`   | ✅       | N/A                                                  | The GitHub token for authentication.                                                               |
+| `labels-minor`   | ✅       | N/A                                                  | A comma-separated list of labels that trigger a minor version increment.                           |
+| `labels-major`   | ✅       | N/A                                                  | A comma-separated list of labels that trigger a major version increment.                           |
+| `labels-patch`   | ✅       | N/A                                                  | A comma-separated list of labels that trigger a patch version increment.                           |
+| `commit-message` | ❌       | chore: version update {{version}} -> {{new-version}} | The commit message. `{{version}}` is the current version and `{{new-version}}` is the new version. |
+| `pr-number`      | ❌       | N/A                                                  | The pull request number to check (optional: when using push event).                                |
+| `skip-commit`    | ❌       | false                                                | If set to true, the action will skip committing changes.                                           |
+| `create-tag`     | ❌       | false                                                | If set to true, the action will create a tag for the new version.                                  |
+| `tag-name`       | ❌       | `v{{new-version}}`                                   | The name for the tag. `{{new-version}}` is the new version returned by the action.                 |
+| `path`           | ❌       | `package.json`                                       | The path to the `package.json` file (default is `package.json`).                                   |
+| `dry-run`        | ❌       | false                                                | If set to true, the action will not commit changes.                                                |
 
 ## Outputs
 

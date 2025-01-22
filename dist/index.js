@@ -31906,9 +31906,11 @@ async function run() {
     console.log("- dry-run:", dryRun);
     console.log("- package.json path:", path);
     console.groupEnd();
+    const repo = github_1.context.repo.repo;
+    const owner = github_1.context.repo.owner;
     const { data: currentFile } = await octokit.rest.repos.getContent({
-        owner: github_1.context.repo.owner,
-        repo: github_1.context.repo.repo,
+        owner,
+        repo,
         path,
         ref: pullRequest.head.ref,
     });
@@ -31917,8 +31919,8 @@ async function run() {
     try {
         // Fetch existing labels from the pull request
         const { data: pullRequestData } = await octokit.rest.pulls.get({
-            owner: github_1.context.repo.owner,
-            repo: github_1.context.repo.repo,
+            owner,
+            repo,
             pull_number: pullRequest.number,
         });
         const existingLabels = pullRequestData.labels.map((label) => label.name);
@@ -31970,31 +31972,33 @@ async function run() {
             console.group("\nCommitting changes:");
             console.log("- commit-message:", message);
             console.log("- path:", path);
-            console.log("- content:", content);
             console.groupEnd();
-            await octokit.rest.repos.createOrUpdateFileContents({
-                owner: github_1.context.repo.owner,
-                repo: github_1.context.repo.repo,
+            const commitResponse = await octokit.rest.repos.createOrUpdateFileContents({
+                owner,
+                repo,
                 path,
                 message,
                 content,
                 branch: pullRequest.base.ref,
-                sha: currentFile.sha, // Use the current file's SHA
-            });
-            console.log(`🎉 Commit completed`);
-        }
-        if (createTag) {
-            // Create a reference to the new tag
-            console.group("\nCreating Tag:");
-            console.log("- tag-name:", tagName);
-            console.groupEnd();
-            await octokit.rest.git.createRef({
-                owner: github_1.context.repo.owner,
-                repo: github_1.context.repo.repo,
-                ref: `refs/tags/${tagName}`,
                 sha: currentFile.sha,
             });
-            console.log(`🎉 Tag ${tagName} created successfully`);
+            console.log(`🎉 Commit completed`);
+            if (createTag) {
+                // Create a reference to the new tag using the new commit SHA
+                console.group("\nCreating Tag:");
+                console.log("- tag-name:", tagName);
+                console.groupEnd();
+                const sha = commitResponse.data.commit.sha;
+                if (!sha)
+                    return console.log("No SHA found");
+                await octokit.rest.git.createRef({
+                    ref: `refs/tags/${tagName}`,
+                    owner,
+                    repo,
+                    sha,
+                });
+                console.log(`🎉 Tag ${tagName} created successfully`);
+            }
         }
     }
     catch (error) {

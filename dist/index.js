@@ -1,202 +1,6 @@
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 1188:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-const core_1 = __nccwpck_require__(7484);
-const github_1 = __nccwpck_require__(3228);
-const fs_1 = __importDefault(__nccwpck_require__(9896));
-/**
- * Runs the versioning action for a GitHub pull request.
- *
- * This function retrieves the GitHub token, checks for the presence of a pull request,
- * and fetches the existing labels associated with the pull request. Based on the labels,
- * it determines whether to increment the version as major, minor, or patch. If a version
- * change is necessary, it updates the `package.json` file in the repository with the new version.
- *
- * The function performs the following steps:
- * 1. Retrieves the GitHub token from the action inputs.
- * 2. Checks if the action is triggered by a pull request.
- * 3. Fetches existing labels from the pull request.
- * 4. Determines the type of version increment based on the labels.
- * 5. Updates the `package.json` file with the new version if necessary.
- * 6. Commits the changes back to the repository.
- *
- * @async
- * @function run
- * @throws {Error} Throws an error if the GitHub token is missing or if the action is not run on a pull request.
- */
-async function run() {
-    // #region Check token
-    const token = (0, core_1.getInput)("github-token");
-    if (!token)
-        return (0, core_1.setFailed)("GitHub token is required");
-    // #endregion Check token
-    const octokit = (0, github_1.getOctokit)(token);
-    // #region get check & get pr information
-    const prNumber = (0, core_1.getInput)("pr-number");
-    let pullRequest;
-    if (prNumber) {
-        pullRequest = await octokit.rest.pulls
-            .get({
-            owner: github_1.context.repo.owner,
-            repo: github_1.context.repo.repo,
-            pull_number: Number(prNumber),
-        })
-            .then((response) => response.data);
-    }
-    else {
-        pullRequest = github_1.context.payload.pull_request;
-    }
-    if (!pullRequest)
-        return (0, core_1.setFailed)("This action should only be run on a push event or a pull request");
-    // #region get check & get pr information
-    // #region Pull Request task
-    const minorLabels = (0, core_1.getInput)("labels-minor")
-        .split(",")
-        .map((label) => label.trim());
-    const majorLabels = (0, core_1.getInput)("labels-major")
-        .split(",")
-        .map((label) => label.trim());
-    const patchLabels = (0, core_1.getInput)("labels-patch")
-        .split(",")
-        .map((label) => label.trim());
-    console.group("🎉 Major Labels:");
-    majorLabels.forEach((label) => console.log(`- ${label}`));
-    console.groupEnd();
-    console.log(); // Empty space
-    console.group("🚀 Minor Labels:");
-    minorLabels.forEach((label) => console.log(`- ${label}`));
-    console.groupEnd();
-    console.log(); // Empty space
-    console.group("🔧 Patch Labels:");
-    patchLabels.forEach((label) => console.log(`- ${label}`));
-    console.groupEnd();
-    console.log(); // Empty space
-    // const skipCommitInput = getInput("skip-commit");
-    // const skipCommit =
-    //   skipCommitInput === "true" ? true : Boolean(skipCommitInput);
-    const skipCommit = Boolean((0, core_1.getInput)("skip-commit") === "true");
-    // const createTagInput = getInput("create-tag");
-    // const createTag = createTagInput === "false" ? true : Boolean(createTagInput);
-    const createTag = Boolean((0, core_1.getInput)("create-tag") === "true");
-    // const dryRunInput = getInput("dry-run");
-    // const dryRun = dryRunInput === "true" ? true : Boolean(dryRunInput);
-    const dryRun = Boolean((0, core_1.getInput)("dry-run") === "true");
-    const customPath = (0, core_1.getInput)("path");
-    const path = customPath ? customPath.replace(/\/\*\*/g, "") + "/package.json" : "package.json";
-    const commitMessage = (0, core_1.getInput)("commit-message");
-    console.group("\n🔧 Inputs:");
-    console.log("- skip-commit:", skipCommit);
-    console.log("- commit-message:", commitMessage);
-    console.log("- create-tag:", createTag);
-    console.log("- dry-run:", dryRun);
-    console.log("- package.json path:", path);
-    console.groupEnd();
-    const { data: currentFile } = await octokit.rest.repos.getContent({
-        owner: github_1.context.repo.owner,
-        repo: github_1.context.repo.repo,
-        path,
-        ref: pullRequest.head.ref,
-    });
-    const packageJson = Buffer.from(currentFile.content, "base64").toString("utf-8");
-    const version = JSON.parse(packageJson).version;
-    try {
-        // Fetch existing labels from the pull request
-        const { data: pullRequestData } = await octokit.rest.pulls.get({
-            owner: github_1.context.repo.owner,
-            repo: github_1.context.repo.repo,
-            pull_number: pullRequest.number,
-        });
-        const existingLabels = pullRequestData.labels.map((label) => label.name);
-        console.group("\nLabels detected:");
-        existingLabels.forEach((label) => console.log(`- ${label}`));
-        console.groupEnd();
-        console.log(); // Empty space
-        const isMajor = existingLabels.some((label) => majorLabels.includes(label));
-        const isMinor = existingLabels.some((label) => minorLabels.includes(label));
-        const isPatch = existingLabels.some((label) => patchLabels.includes(label));
-        let newVersion = version;
-        if (isMajor) {
-            console.log("🎉 Major label found");
-            newVersion = Number(version.split(".")[0]) + 1 + ".0.0";
-        }
-        else if (isMinor) {
-            console.log("🚀 Minor label found");
-            newVersion = version.split(".")[0] + "." + (Number(version.split(".")[1]) + 1) + ".0";
-        }
-        else if (isPatch) {
-            console.log("🔧 Patch label found");
-            newVersion = version.split(".")[0] + "." + version.split(".")[1] + "." + (Number(version.split(".")[2]) + 1);
-        }
-        if (newVersion === version)
-            return console.log("No version change detected");
-        (0, core_1.setOutput)("new-version", newVersion);
-        (0, core_1.setOutput)("pr-number", pullRequest.number);
-        console.log(`- Expected version bump: ${version} -> ${newVersion}`);
-        if (!!dryRun) {
-            console.log("\nDry run mode enabled. Skipping actual changes.");
-            return;
-        }
-        if (skipCommit) {
-            console.log(`skip commit: ${skipCommit}`);
-            console.log(`skipping version bump commit`);
-            console.log(); // Empty space
-        }
-        else {
-            let packageJson;
-            try {
-                packageJson = JSON.parse(await fs_1.default.promises.readFile(path, "utf-8"));
-            }
-            catch (error) {
-                return (0, core_1.setFailed)(`Failed to read package.json at path: ${path}`);
-            }
-            console.log("project found:", packageJson.name);
-            const message = commitMessage.replace("{{version}}", version).replace("{{new-version}}", newVersion);
-            packageJson.version = newVersion;
-            await fs_1.default.promises.writeFile(path, JSON.stringify(packageJson, null, 2));
-            await octokit.rest.repos.createOrUpdateFileContents({
-                owner: github_1.context.repo.owner,
-                repo: github_1.context.repo.repo,
-                path,
-                message,
-                content: Buffer.from(JSON.stringify(packageJson, null, 2)).toString("base64"),
-                branch: pullRequest.base.ref,
-                sha: currentFile.sha, // Use the current file's SHA
-            });
-        }
-        if (createTag) {
-            console.log(); // Empty space
-            const tagNameInput = (0, core_1.getInput)("tag-name");
-            const tagName = `${tagNameInput.replace("{{new-version}}", newVersion)}`;
-            console.log("- tag-name", tagName);
-            console.log(`\nCreating Tag: ${tagName}`);
-            // Create a reference to the new tag
-            await octokit.rest.git.createRef({
-                owner: github_1.context.repo.owner,
-                repo: github_1.context.repo.repo,
-                ref: `refs/tags/${tagName}`,
-                sha: currentFile.sha,
-            });
-            console.log(`Tag ${tagName} created successfully`);
-        }
-    }
-    catch (error) {
-        (0, core_1.setFailed)(error.message);
-    }
-}
-run();
-
-
-/***/ }),
-
 /***/ 4914:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -32006,12 +31810,201 @@ module.exports = parseParams
 /******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";
 /******/ 	
 /************************************************************************/
-/******/ 	
-/******/ 	// startup
-/******/ 	// Load entry module and return exports
-/******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __nccwpck_require__(1188);
-/******/ 	module.exports = __webpack_exports__;
-/******/ 	
+var __webpack_exports__ = {};
+// This entry need to be wrapped in an IIFE because it need to be in strict mode.
+(() => {
+"use strict";
+var exports = __webpack_exports__;
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const core_1 = __nccwpck_require__(7484);
+const github_1 = __nccwpck_require__(3228);
+/**
+ * Runs the versioning action for a GitHub pull request.
+ *
+ * This function retrieves the GitHub token, checks for the presence of a pull request,
+ * and fetches the existing labels associated with the pull request. Based on the labels,
+ * it determines whether to increment the version as major, minor, or patch. If a version
+ * change is necessary, it updates the `package.json` file in the repository with the new version.
+ *
+ * The function performs the following steps:
+ * 1. Retrieves the GitHub token from the action inputs.
+ * 2. Checks if the action is triggered by a pull request.
+ * 3. Fetches existing labels from the pull request.
+ * 4. Determines the type of version increment based on the labels.
+ * 5. Updates the `package.json` file with the new version if necessary.
+ * 6. Commits the changes back to the repository.
+ *
+ * @async
+ * @function run
+ * @throws {Error} Throws an error if the GitHub token is missing or if the action is not run on a pull request.
+ */
+async function run() {
+    // #region Check token
+    const token = (0, core_1.getInput)("github-token");
+    if (!token)
+        return (0, core_1.setFailed)("GitHub token is required");
+    // #endregion Check token
+    const octokit = (0, github_1.getOctokit)(token);
+    // #region get check & get pr information
+    const prNumber = (0, core_1.getInput)("pr-number");
+    let pullRequest;
+    if (prNumber) {
+        pullRequest = await octokit.rest.pulls
+            .get({
+            owner: github_1.context.repo.owner,
+            repo: github_1.context.repo.repo,
+            pull_number: Number(prNumber),
+        })
+            .then((response) => response.data);
+    }
+    else {
+        pullRequest = github_1.context.payload.pull_request;
+    }
+    if (!pullRequest)
+        return (0, core_1.setFailed)("This action should only be run on a push event or a pull request");
+    // #region get check & get pr information
+    // #region Pull Request task
+    const minorLabels = (0, core_1.getInput)("labels-minor")
+        .split(",")
+        .map((label) => label.trim());
+    const majorLabels = (0, core_1.getInput)("labels-major")
+        .split(",")
+        .map((label) => label.trim());
+    const patchLabels = (0, core_1.getInput)("labels-patch")
+        .split(",")
+        .map((label) => label.trim());
+    console.group("🎉 Major Labels:");
+    majorLabels.forEach((label) => console.log(`- ${label}`));
+    console.groupEnd();
+    console.log(); // Empty space
+    console.group("🚀 Minor Labels:");
+    minorLabels.forEach((label) => console.log(`- ${label}`));
+    console.groupEnd();
+    console.log(); // Empty space
+    console.group("🔧 Patch Labels:");
+    patchLabels.forEach((label) => console.log(`- ${label}`));
+    console.groupEnd();
+    console.log(); // Empty space
+    // const skipCommitInput = getInput("skip-commit");
+    // const skipCommit =
+    //   skipCommitInput === "true" ? true : Boolean(skipCommitInput);
+    const skipCommit = Boolean((0, core_1.getInput)("skip-commit") === "true");
+    // const createTagInput = getInput("create-tag");
+    // const createTag = createTagInput === "false" ? true : Boolean(createTagInput);
+    const createTag = Boolean((0, core_1.getInput)("create-tag") === "true");
+    // const dryRunInput = getInput("dry-run");
+    // const dryRun = dryRunInput === "true" ? true : Boolean(dryRunInput);
+    const dryRun = Boolean((0, core_1.getInput)("dry-run") === "true");
+    const customPath = (0, core_1.getInput)("path");
+    const path = customPath ? customPath.replace(/\/\*\*/g, "") + "/package.json" : "package.json";
+    const commitMessage = (0, core_1.getInput)("commit-message");
+    console.group("\n🔧 Inputs:");
+    console.log("- skip-commit:", skipCommit);
+    console.log("- commit-message:", commitMessage);
+    console.log("- create-tag:", createTag);
+    console.log("- dry-run:", dryRun);
+    console.log("- package.json path:", path);
+    console.groupEnd();
+    const { data: currentFile } = await octokit.rest.repos.getContent({
+        owner: github_1.context.repo.owner,
+        repo: github_1.context.repo.repo,
+        path,
+        ref: pullRequest.head.ref,
+    });
+    const packageJson = JSON.parse(Buffer.from(currentFile.content, "base64").toString("utf-8"));
+    const version = packageJson.version;
+    try {
+        // Fetch existing labels from the pull request
+        const { data: pullRequestData } = await octokit.rest.pulls.get({
+            owner: github_1.context.repo.owner,
+            repo: github_1.context.repo.repo,
+            pull_number: pullRequest.number,
+        });
+        const existingLabels = pullRequestData.labels.map((label) => label.name);
+        console.group("\nLabels detected:");
+        existingLabels.forEach((label) => console.log(`- ${label}`));
+        console.groupEnd();
+        console.log(); // Empty space
+        const isMajor = existingLabels.some((label) => majorLabels.includes(label));
+        const isMinor = existingLabels.some((label) => minorLabels.includes(label));
+        const isPatch = existingLabels.some((label) => patchLabels.includes(label));
+        let newVersion = version;
+        if (isMajor) {
+            console.log("🎉 Major label found");
+            newVersion = Number(version.split(".")[0]) + 1 + ".0.0";
+        }
+        else if (isMinor) {
+            console.log("🚀 Minor label found");
+            newVersion = version.split(".")[0] + "." + (Number(version.split(".")[1]) + 1) + ".0";
+        }
+        else if (isPatch) {
+            console.log("🔧 Patch label found");
+            newVersion = version.split(".")[0] + "." + version.split(".")[1] + "." + (Number(version.split(".")[2]) + 1);
+        }
+        if (newVersion === version)
+            return console.log("No version change detected");
+        (0, core_1.setOutput)("new-version", newVersion);
+        (0, core_1.setOutput)("pr-number", pullRequest.number);
+        console.log(`- Expected version bump: ${version} -> ${newVersion}`);
+        const message = commitMessage.replace("{{version}}", version).replace("{{new-version}}", newVersion);
+        console.group("\n🔧 Commit:");
+        console.log("- commit-message:", message);
+        const tagNameInput = (0, core_1.getInput)("tag-name");
+        const tagName = `${tagNameInput.replace("{{new-version}}", newVersion)}`;
+        console.log("- tag-name", tagName);
+        console.log(`\nCreating Tag: ${tagName}`);
+        console.log(); // Empty space
+        if (!!dryRun) {
+            console.log("\nDry run mode enabled. Skipping actual changes.");
+            return;
+        }
+        if (skipCommit) {
+            console.log(`skip commit: ${skipCommit}`);
+            console.log(`skipping version bump commit`);
+            console.log(); // Empty space
+        }
+        else {
+            packageJson.version = newVersion;
+            const content = Buffer.from(JSON.stringify(packageJson, null, 2)).toString("base64");
+            console.group("\nCommitting changes:");
+            console.log("- commit-message:", message);
+            console.log("- path:", path);
+            console.log("- content:", content);
+            console.groupEnd();
+            await octokit.rest.repos.createOrUpdateFileContents({
+                owner: github_1.context.repo.owner,
+                repo: github_1.context.repo.repo,
+                path,
+                message,
+                content,
+                branch: pullRequest.base.ref,
+                sha: currentFile.sha, // Use the current file's SHA
+            });
+            console.log(`🎉 Commit completed`);
+        }
+        if (createTag) {
+            // Create a reference to the new tag
+            console.group("\nCreating Tag:");
+            console.log("- tag-name:", tagName);
+            console.groupEnd();
+            await octokit.rest.git.createRef({
+                owner: github_1.context.repo.owner,
+                repo: github_1.context.repo.repo,
+                ref: `refs/tags/${tagName}`,
+                sha: currentFile.sha,
+            });
+            console.log(`🎉 Tag ${tagName} created successfully`);
+        }
+    }
+    catch (error) {
+        (0, core_1.setFailed)(error.message);
+    }
+}
+run();
+
+})();
+
+module.exports = __webpack_exports__;
 /******/ })()
 ;

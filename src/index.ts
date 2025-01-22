@@ -109,8 +109,8 @@ async function run() {
     ref: pullRequest.head.ref,
   });
 
-  const packageJson = Buffer.from((currentFile as any).content, "base64").toString("utf-8");
-  const version = JSON.parse(packageJson).version;
+  const packageJson = JSON.parse(Buffer.from((currentFile as any).content, "base64").toString("utf-8"));
+  const version = packageJson.version;
 
   try {
     // Fetch existing labels from the pull request
@@ -150,6 +150,17 @@ async function run() {
 
     console.log(`- Expected version bump: ${version} -> ${newVersion}`);
 
+    const message = commitMessage.replace("{{version}}", version).replace("{{new-version}}", newVersion);
+
+    console.group("\n🔧 Commit:");
+    console.log("- commit-message:", message);
+
+    const tagNameInput = getInput("tag-name");
+    const tagName = `${tagNameInput.replace("{{new-version}}", newVersion)}`;
+    console.log("- tag-name", tagName);
+    console.log(`\nCreating Tag: ${tagName}`);
+    console.log(); // Empty space
+
     if (!!dryRun) {
       console.log("\nDry run mode enabled. Skipping actual changes.");
       return;
@@ -160,38 +171,35 @@ async function run() {
       console.log(`skipping version bump commit`);
       console.log(); // Empty space
     } else {
-      let packageJson;
-      try {
-        packageJson = JSON.parse(await fs.promises.readFile(path, "utf-8"));
-      } catch (error) {
-        return setFailed(`Failed to read package.json at path: ${path}`);
-      }
-      console.log("project found:", packageJson.name);
-
-      const message = commitMessage.replace("{{version}}", version).replace("{{new-version}}", newVersion);
-
       packageJson.version = newVersion;
-      await fs.promises.writeFile(path, JSON.stringify(packageJson, null, 2));
+
+      const content = Buffer.from(JSON.stringify(packageJson, null, 2)).toString("base64");
+
+      console.group("\nCommitting changes:");
+      console.log("- commit-message:", message);
+      console.log("- path:", path);
+      console.log("- content:", content);
+      console.groupEnd();
 
       await octokit.rest.repos.createOrUpdateFileContents({
         owner: context.repo.owner,
         repo: context.repo.repo,
         path,
         message,
-        content: Buffer.from(JSON.stringify(packageJson, null, 2)).toString("base64"),
+        content,
         branch: pullRequest.base.ref,
         sha: (currentFile as any).sha, // Use the current file's SHA
       });
+
+      console.log(`🎉 Commit completed`);
     }
     if (createTag) {
-      console.log(); // Empty space
-
-      const tagNameInput = getInput("tag-name");
-      const tagName = `${tagNameInput.replace("{{new-version}}", newVersion)}`;
-      console.log("- tag-name", tagName);
-      console.log(`\nCreating Tag: ${tagName}`);
-
       // Create a reference to the new tag
+
+      console.group("\nCreating Tag:");
+      console.log("- tag-name:", tagName);
+      console.groupEnd();
+
       await octokit.rest.git.createRef({
         owner: context.repo.owner,
         repo: context.repo.repo,
@@ -199,7 +207,7 @@ async function run() {
         sha: (currentFile as any).sha,
       });
 
-      console.log(`Tag ${tagName} created successfully`);
+      console.log(`🎉 Tag ${tagName} created successfully`);
     }
   } catch (error) {
     setFailed((error as Error).message);

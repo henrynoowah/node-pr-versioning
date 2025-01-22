@@ -31886,16 +31886,9 @@ async function run() {
     patchLabels.forEach((label) => console.log(`- ${label}`));
     console.groupEnd();
     console.log(); // Empty space
-    // const skipCommitInput = getInput("skip-commit");
-    // const skipCommit =
-    //   skipCommitInput === "true" ? true : Boolean(skipCommitInput);
-    const skipCommit = Boolean((0, core_1.getInput)("skip-commit") === "true");
-    // const createTagInput = getInput("create-tag");
-    // const createTag = createTagInput === "false" ? true : Boolean(createTagInput);
-    const createTag = Boolean((0, core_1.getInput)("create-tag") === "true");
-    // const dryRunInput = getInput("dry-run");
-    // const dryRun = dryRunInput === "true" ? true : Boolean(dryRunInput);
-    const dryRun = Boolean((0, core_1.getInput)("dry-run") === "true");
+    const skipCommit = (0, core_1.getBooleanInput)("skip-commit");
+    const createTag = (0, core_1.getBooleanInput)("create-tag");
+    const dryRun = (0, core_1.getBooleanInput)("dry-run");
     const customPath = (0, core_1.getInput)("path");
     const path = customPath ? customPath.replace(/\/\*\*/g, "") + "/package.json" : "package.json";
     const commitMessage = (0, core_1.getInput)("commit-message");

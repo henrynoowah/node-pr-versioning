@@ -1,4 +1,4 @@
-import { getInput, setFailed, setOutput } from "@actions/core";
+import { getInput, getBooleanInput, setFailed, setOutput } from "@actions/core";
 import { context, getOctokit } from "@actions/github";
 import fs from "fs";
 /**
@@ -76,18 +76,11 @@ async function run() {
   console.groupEnd();
   console.log(); // Empty space
 
-  // const skipCommitInput = getInput("skip-commit");
-  // const skipCommit =
-  //   skipCommitInput === "true" ? true : Boolean(skipCommitInput);
-  const skipCommit: boolean = Boolean(getInput("skip-commit") === "true");
+  const skipCommit: boolean = getBooleanInput("skip-commit");
 
-  // const createTagInput = getInput("create-tag");
-  // const createTag = createTagInput === "false" ? true : Boolean(createTagInput);
-  const createTag: boolean = Boolean(getInput("create-tag") === "true");
+  const createTag: boolean = getBooleanInput("create-tag");
 
-  // const dryRunInput = getInput("dry-run");
-  // const dryRun = dryRunInput === "true" ? true : Boolean(dryRunInput);
-  const dryRun: boolean = Boolean(getInput("dry-run") === "true");
+  const dryRun: boolean = getBooleanInput("dry-run");
 
   const customPath = getInput("path");
   const path = customPath ? customPath.replace(/\/\*\*/g, "") + "/package.json" : "package.json";

@@ -24,18 +24,16 @@ inputs:
     required: false
     default: "chore: version update {{version}} -> {{new-version}}"
   skip-commit:
-    type: boolean
     description: "Skip commit the changes to the repository"
     required: false
-    default: false
+    default: "false"
   path:
     description: "The path to the package.json file"
     required: false
   create-tag:
-    type: boolean
     description: "Create a tag using new version"
     required: false
-    default: false
+    default: "false"
   tag-name:
     description: "Tag name"
     required: false
@@ -44,10 +42,9 @@ inputs:
     description: "The pull request number"
     required: false
   dry-run:
-    type: boolean
     description: "Dry run the action"
     required: false
-    default: false
+    default: "false"
 
 runs:
   using: "node20"

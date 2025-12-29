@@ -31905,7 +31905,7 @@ async function run() {
         owner,
         repo,
         path,
-        ref: pullRequest.head.ref,
+        ref: pullRequest.head.sha,
     });
     const packageJson = JSON.parse(Buffer.from(currentFile.content, "base64").toString("utf-8"));
     const version = packageJson.version;

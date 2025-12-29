@@ -1,7 +1,7 @@
 {
   "name": "@noowah/node-pr-versioning",
   "author": "Hawoon JOH <henrynoowah@noowah.com> (https://github.com/henrynoowah)",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "GitHub Action for automated PR versioning in Node.js projects",
   "main": "index.js",
   "scripts": {

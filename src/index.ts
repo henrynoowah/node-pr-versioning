@@ -102,7 +102,7 @@ async function run() {
     owner,
     repo,
     path,
-    ref: pullRequest.head.ref,
+    ref: pullRequest.head.sha,
   });
 
   const packageJson = JSON.parse(Buffer.from((currentFile as any).content, "base64").toString("utf-8"));

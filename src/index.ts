@@ -197,14 +197,20 @@ async function run() {
         const sha = commitResponse.data.commit.sha;
 
         if (!sha) return console.log("No SHA found");
-        await octokit.rest.git.createRef({
-          ref: `refs/tags/${tagName}`,
-          owner,
-          repo,
-          sha,
-        });
-
-        console.log(`🎉 Tag ${tagName} created successfully`);
+        await octokit.rest.git
+          .createRef({
+            ref: `refs/tags/${tagName}`,
+            owner,
+            repo,
+            sha,
+          })
+          .then(() => {
+            console.info(`🎉 Tag ${tagName} created successfully`);
+          })
+          .catch((error) => {
+            console.error(`Failed to create tag ${tagName}: ${error}`);
+            console.info("skipping tag creation");
+          });
       }
     }
   } catch (error) {
